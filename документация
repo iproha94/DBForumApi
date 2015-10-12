@@ -1,0 +1,51 @@
+//----------Общие
+очистить таблицы
+http://some.host.ru/db/api/clear/
+{"code": 0, "response": "OK"} 
+
+инфа о бд
+http://some.host.ru/db/api/status/
+{"code": 0, "response": {"user": 100000, "thread": 1000, "forum": 100, "post": 1000000}}
+
+
+//----------User
+создание пользователя
+http://some.host.ru/db/api/user/create/ with {"username": "user1", "about": "hello im user1", "isAnonymous": false, "name": "John", "email": "example@mail.ru"}
+
+Получение данных пользователя
+ http://some.host.ru/db/api/user/details/?user=example%40mail.ru
+
+Делаем одного пользоваеля подписчиком другого пользователя
+ http://some.host.ru/db/api/user/follow/ with {"follower": "example@mail.ru", "followee": "example3@mail.ru"}
+
+Получить подписчиков данного юзера
+http://some.host.ru/db/api/user/listFollowers/?user=example%40mail.ru&order=asc 
+
+Получить на кого подписан текущий пользователь
+http://some.host.ru/db/api/user/listFollowing/?limit=3&user=example3%40mail.ru&since_id=1&order=desc
+
+Получить посты текущего пользователя
+http://some.host.ru/db/api/user/listPosts/?since=2014-01-02+00%3A00%3A00&limit=2&user=example%40mail.ru&order=asc:
+
+Отписаться пользователю от другого пользователя
+http://some.host.ru/db/api/user/unfollow/ with {"follower": "example@mail.ru", "followee": "example3@mail.ru"}
+
+Обновить информацию о пользователе
+http://some.host.ru/db/api/user/updateProfile/ with {"about": "Wowowowow!!!", "user": "example3@mail.ru", "name": "NewName2"}
+
+//----------Forum
+
+создать новый форум
+http://some.host.ru/db/api/forum/create/ with {"name": "Forum With Sufficiently Large Name", "short_name": "forumwithsufficientlylargename", "user": "richard.nixon@example.com"}
+
+получить инфо о форуме
+http://some.host.ru/db/api/forum/details/?related=user&forum=forum3
+
+получить посты форума
+http://some.host.ru/db/api/forum/listPosts/?related=thread&related=forum&since=2014-01-01+00%3A00%3A00&order=desc&forum=forum1
+
+получить темы форума
+http://some.host.ru/db/api/forum/listThreads/?related=forum&since=2013-12-31+00%3A00%3A00&order=desc&forum=forum1
+
+получить пользователей , которые писали посты в этом форуме
+ http://some.host.ru/db/api/forum/listUsers/?order=desc&forum=forum1
