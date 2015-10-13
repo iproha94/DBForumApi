@@ -18,9 +18,20 @@ from django.contrib import admin
 
 from myforumapi.viewsGeneral import *
 from myforumapi.viewsUser import *
+from myforumapi.viewsPost import *
+from myforumapi.viewsThread import *
+from myforumapi.viewsForum import *
+from myforumapi.autoFillDB import *
 
 urlpatterns = [
 	url(r'^admin/', include(admin.site.urls)),
+
+	#Fill
+	url(r'^db/api/user/fillUser/', fillUser),
+	url(r'^db/api/user/fillFollower/', fillFollower),
+	url(r'^db/api/forum/fillForum/', fillForum),
+	url(r'^db/api/thread/fillThread/', fillThread),
+	url(r'^db/api/post/fillPost/', fillPost),
 
     #General
     url(r'^db/api/clear/', clear),
@@ -31,4 +42,17 @@ urlpatterns = [
     url(r'^db/api/user/details/$', detailsUser),
     url(r'^db/api/user/follow/$', followUser),
     url(r'^db/api/user/listFollowers/$', listFollowers),
+    url(r'^db/api/user/listFollowing/$', listFollowing),
+    url(r'^db/api/user/listPosts/$', listPosts),
+
+    #Post
+    url(r'^db/api/post/create/$', createPost),
+
+    #Forum
+    url(r'^db/api/forum/create/$', createForum),
+    url(r'^db/api/forum/details/$', detailsForum),
+
+    #Thread
+    url(r'^db/api/thread/create/$', createThread),
+    url(r'^db/api/thread/details/$', detailsThread),
 ]

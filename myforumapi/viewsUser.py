@@ -15,7 +15,7 @@ def getInfoUser(email):
 	cursor.execute(query)
 	rowUser = cursor.fetchone()
 
-	isAnonymous = 'true' if rowUser[5] == 1 else 'false'
+	isAnonymous = True if rowUser[5] == 1 else False
 
 	d = { "about": rowUser[2],
 	        "email": email,
@@ -27,7 +27,9 @@ def getInfoUser(email):
 
 	return d
 
-#получить полную инфу(с подписчиками, подписками на людей и темы) о пользователе по емейлу
+
+
+#получить полную инфу(с подписчиками(емайл), подписками на людей(емайл) и темы(id)) о пользователе по емейлу
 def getFullInfoUser(email):
 	cursor = connection.cursor()
 	
@@ -40,12 +42,23 @@ def getFullInfoUser(email):
 	cursor.execute(query)
 	rowsFollowee = cursor.fetchall()
 
+	a = [];
+	for row in rowsFollowee:
+		 a.append(row[0])
+	d.update({"following": a})
+
+
 	query = '''select followerEmail
 				from Follower
 				where followeeEmail = '%s';
 			''' % (email) 
 	cursor.execute(query)
 	rowsFollower = cursor.fetchall()
+
+	a = [];
+	for row in rowsFollower:
+		 a.append(row[0])
+	d.update({"followers": a})
 
 	query = '''select threadId
 				from Subscriber
@@ -54,9 +67,10 @@ def getFullInfoUser(email):
 	cursor.execute(query)
 	rowsSubscriber = cursor.fetchall()
 
-	d.update({"following": rowsFollowee})
-	d.update({"followers": rowsFollower})
-	d.update({"subscriptions": rowsSubscriber})
+	a = [];
+	for row in rowsSubscriber:
+		 a.append(row[0])
+	d.update({"subscriptions": a})
 
 	return d	
 
@@ -121,15 +135,25 @@ def listFollowers(request):
 	#обязательные GET
 	email = request.GET['user']	
 
-	#опциональные POST
-	#limit = request.GET.get('limit', '???')
+	#опциональные GET
+	limit = request.GET.get('limit', None)
 	order = request.GET.get('order', 'desc')
-	#since_id = request.GET.get('since_id', '???')
+	since_id = request.GET.get('since_id', None)
 
-	query = '''select followerEmail
-				from Follower
-				where followeeEmail = '%s';
+	query = '''select fer.followerEmail, u.name followerName, u.userId followerId
+				from Follower fer, User u
+				where u.email = fer.followerEmail 
+					and fer.followeeEmail = '%s'
 			''' % (email) 
+
+	if since_id is not None:
+		query += " and followerId >= %s " % (since_id)
+
+	query += " order by followerName %s " % (order)
+
+	if limit is not None:
+		query += " limit %s " % (limit)
+		
 	cursor.execute(query)
 	rowsFollower = cursor.fetchall()
 
@@ -141,3 +165,48 @@ def listFollowers(request):
 	response = { "code": code, "response": d }
 
 	return JsonResponse(response)
+
+def listFollowing(request):
+	cursor = connection.cursor()
+
+	#обязательные GET
+	email = request.GET['user']	
+
+	#опциональные GET
+	limit = request.GET.get('limit', None)
+	order = request.GET.get('order', 'desc')
+	since_id = request.GET.get('since_id', None)
+
+	query = '''select fee.followeeEmail, u.name followeeName, u.userId
+				from Follower fee, User u
+				where u.email = fee.followeeEmail 
+					and fee.followerEmail = '%s'
+			''' % (email) 
+
+	if since_id is not None:
+		query += " and userId >= %s " % (since_id)
+
+	query += " order by followeeName %s " % (order)
+
+	if limit is not None:
+		query += " limit %s " % (limit)
+		
+	cursor.execute(query)
+	rowsFollowee = cursor.fetchall()
+
+	d = [];
+	for row in rowsFollowee:
+		 d.append(getFullInfoUser(row[0]))
+
+	code = 0
+	response = { "code": code, "response": d }
+
+	return JsonResponse(response)
+
+
+def listPosts(request):
+
+	response = { "code": 0, "response": [] }
+
+	return JsonResponse(response)
+
