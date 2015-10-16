@@ -5,10 +5,10 @@ from django.http import JsonResponse
 
 def fillDB(request):
 
-	fillUser()
-	fillFollower()
-	fillForum()
-	fillThread()
+	#fillUser()
+	#fillFollower()
+	#fillForum()
+	#fillThread()
 	fillPost()
 	
 	code = 0
@@ -138,14 +138,10 @@ def fillPost():
 	
 	query = '''insert into Post 
 				(threadId, userEmail, parent, datePost, message, 
-					isEdited, isDeleted, isSpam, isHighlighted, isApproved,
 					forumShortName) 
-				values ('%s','%s',%s,'%s','%s',
-					'%d', '%d', '%d', '%d', '%d', 
-					'%s');
-			''' % ("1", "email2", "Null", date, message,
-					isEdited, isDeleted, isSpam, isHighlighted, isApproved,
-					forumShortName)
-	cursor.execute(query)
+				values (%s,%s,'%s',%s,%s, %s) '''
 
+	cursor.execute(query, ("1", "email2", "Null", "2014-01-01 00:00:01", "messagePost tratata", "forum1"))
+
+	
 	return

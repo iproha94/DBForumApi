@@ -49,6 +49,7 @@ urlpatterns = [
     #Forum
     url(r'^db/api/forum/create/$', createForum),
     url(r'^db/api/forum/details/$', detailsForum),
+    url(r'^db/api/forum/listUsers/$', listUsersForum),
 
     #Thread
     url(r'^db/api/thread/create/$', createThread),

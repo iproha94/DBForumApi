@@ -61,8 +61,56 @@ def detailsForum(request):
 	#опциональные
 	related = request.GET.getlist('related', [])	
 
-	code = 0
-	response = { "code": code, "response": getInfoForum(shortName, related, cursor) }
+	try:			 
+		code = 0
+		responseMessage =  getInfoForum(shortName, related, cursor)
+	except:
+		code = 1
+		responseMessage = "Forum not found"
 
+	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
+def listUsersForum(request):
+	cursor = connection.cursor()
+
+	#обязательные GET
+	shortName = request.GET['forum']	
+
+	#опциональные GET
+	limit = request.GET.get('limit', None)
+	order = request.GET.get('order', 'desc')
+	since_id = request.GET.get('since_id', None)
+
+	query = '''select p.userEmail userEmail, u.name as uname, u.userId as userId
+				from Post p, User u
+				where p.forumShortName = %s 
+					and p.userEmail == u.email ''' % (shortName) 
+
+	if since_id is not None:
+		query += " and userId >= %s " % (since_id)
+
+	query += " order by uname %s " % (order)
+
+	if limit is not None:
+		query += " limit %s " % (limit)
+		
+	try:
+		#выдаст исключение, если такого пользователя нет
+		getInfoForum(shortName, [], cursor);
+
+		cursor.execute(query)
+		rowsUser = cursor.fetchall()
+
+		d = [];
+		for row in rowsUser:
+			 d.append(getInfoUser(row[0], ['followers', 'following', 'subscriptions'], cursor))
+
+		code = 0
+		response = d
+	except:
+		code = 1
+		response = "Forum not found"
+
+	response = { "code": code, "response": response}
+	return JsonResponse(response)
