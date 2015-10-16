@@ -16,26 +16,21 @@ Including another URLconf
 from django.conf.urls import include, url
 from django.contrib import admin
 
-from myforumapi.viewsGeneral import *
-from myforumapi.viewsUser import *
-from myforumapi.viewsPost import *
-from myforumapi.viewsThread import *
-from myforumapi.viewsForum import *
-from myforumapi.autoFillDB import *
+from views.General import *
+from views.User import *
+from views.Post import *
+from views.Thread import *
+from views.Forum import *
+from views.FillDB import *
 
 urlpatterns = [
 	url(r'^admin/', include(admin.site.urls)),
 
-	#Fill
-	url(r'^db/api/user/fillUser/', fillUser),
-	url(r'^db/api/user/fillFollower/', fillFollower),
-	url(r'^db/api/forum/fillForum/', fillForum),
-	url(r'^db/api/thread/fillThread/', fillThread),
-	url(r'^db/api/post/fillPost/', fillPost),
-
     #General
     url(r'^db/api/clear/', clear),
     url(r'^db/api/status/', status),
+    url(r'^db/api/fillDB/', fillDB),
+
 	
     #User
     url(r'^db/api/user/create/$', createUser),
@@ -44,6 +39,9 @@ urlpatterns = [
     url(r'^db/api/user/listFollowers/$', listFollowers),
     url(r'^db/api/user/listFollowing/$', listFollowing),
     url(r'^db/api/user/listPosts/$', listPosts),
+    url(r'^db/api/user/unfollow/$', unfollowUser),
+    url(r'^db/api/user/updateProfile/$', updateProfileUser),
+
 
     #Post
     url(r'^db/api/post/create/$', createPost),
