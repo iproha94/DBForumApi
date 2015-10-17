@@ -9,7 +9,7 @@ def fillDB(request):
 	#fillFollower()
 	#fillForum()
 	#fillThread()
-	fillPost()
+	#fillPost()
 	
 	code = 0
 	response = { "code": code, "response": "OK"}
@@ -137,11 +137,13 @@ def fillPost():
 	cursor = connection.cursor()
 	
 	query = '''insert into Post 
-				(threadId, userEmail, parent, datePost, message, 
+				(threadId, userEmail, datePost, message, 
 					forumShortName) 
-				values (%s,%s,'%s',%s,%s, %s) '''
+				values (%s,%s,%s,%s, %s) '''
 
-	cursor.execute(query, ("1", "email2", "Null", "2014-01-01 00:00:01", "messagePost tratata", "forum1"))
+	cursor.execute(query, ("2", "email4", "2014-01-01 00:00:01", "messagePost3 tratata", "forum1"))
+
+	cursor.execute(query, ("2", "email3", "2014-01-01 00:00:01", "messagePost4 tratata", "forum1"))
 
 	
 	return

@@ -3,6 +3,8 @@
 from django.http import JsonResponse
 from django.db import connection
 
+from views.Post import getInfoPost
+
 #получить инфу о пользователе по емейлу
 def getInfoUser(email, related, cursor):
 	query = '''select userId, username, about, name, email, isAnonymous
@@ -226,12 +228,6 @@ def listFollowing(request):
 	return JsonResponse(response)
 
 
-def listPosts(request):
-
-	response = { "code": 0, "response": [] }
-
-	return JsonResponse(response)
-
 def unfollowUser(request):
 	cursor = connection.cursor()
 
@@ -276,3 +272,45 @@ def updateProfileUser(request):
 	response = { "code": code, "response": response}
 	return JsonResponse(response)
 
+def listPostsUser(request):
+	cursor = connection.cursor()
+
+	#обязательные GET
+	userEmail = request.GET['user']
+
+	#опциональные GET
+	limit = request.GET.get('limit', None)
+	orderDate = request.GET.get('order', 'desc')
+	since = request.GET.get('since', None)
+
+	query = '''select postId
+				from Post
+				where userEmail = '%s' 
+				''' % (userEmail) 
+
+	if since is not None:
+		query += " and datePost >= '%s' " % (since)
+
+	query += " order by datePost %s " % (orderDate)
+
+	if limit is not None:
+		query += " limit %s " % (limit)
+		
+	# try:
+	getInfoUser(userEmail, [], cursor)
+
+	cursor.execute(query)
+	rowsPost = cursor.fetchall()
+
+	d = [];
+	for row in rowsPost:
+		 d.append(getInfoPost(row[0], [], cursor))
+
+	code = 0
+	responseMessage = d
+	# except:
+	# 	code = 1
+	# 	responseMessage = "User not found"
+
+	response = { "code": code, "response": responseMessage}
+	return JsonResponse(response)
