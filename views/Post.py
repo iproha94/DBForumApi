@@ -5,8 +5,17 @@ from django.db import connection
 
 from views.Forum import getInfoForum
 from views.Thread import getInfoThread
+import json
+from datetime import datetime
+
+
+from django.views.decorators.csrf import csrf_exempt
+
+
 
 def getInfoPost(id, related, cursor):
+	id = int(id)
+
 	query = '''select threadId, userEmail, parent, datePost, message, 
 					isEdited, isDeleted, isSpam, isHighlighted, isApproved,
 					forumShortName, likes, dislikes, points
@@ -27,7 +36,7 @@ def getInfoPost(id, related, cursor):
 	threadId = rowPost[0]
 	forumShortName = rowPost[10]
 
-	d = { "date": rowPost[3],
+	d = { "date": datetime.strftime(rowPost[3], '%Y-%m-%d %H:%M:%S'),
 			"dislikes": rowPost[12],
 			"likes": rowPost[11],
 			"points": rowPost[13],
@@ -56,38 +65,34 @@ def getInfoPost(id, related, cursor):
 	
 	if 'thread' in related:
 		d.update({'thread': getInfoThread(threadId, [], cursor)})	
-	
-	
-	
 
 	return d
 
-
-
-
-def createPost(request):
+@csrf_exempt 
+def createPost(request1):
 	cursor = connection.cursor()
+ 	request = json.loads(request1.body)	
 
 	#обязательные POST
-	date = request.GET['date']
-	threadId = request.GET['thread']
-	message = request.GET['message']
-	userEmail = request.GET['user']
-	forumShortName = request.GET['forum']
+	date = request['date']
+	threadId = request['thread']
+	message = request['message']
+	userEmail = request['user']
+	forumShortName = request['forum']
 
 	#опциональные POST
-	parent = request.GET.get('parent', 'Null')
-	isApproved = request.GET.get('isApproved', 'false')
-	isHighlighted = request.GET.get('isHighlighted', 'false')
-	isEdited = request.GET.get('isEdited', 'false')
-	isSpam = request.GET.get('isSpam', 'false')
-	isDeleted = request.GET.get('isDeleted', 'false')
+	parent = request.get('parent', None)
+	isApproved = request.get('isApproved', False)
+	isHighlighted = request.get('isHighlighted', False)
+	isEdited = request.get('isEdited', False)
+	isSpam = request.get('isSpam', False)
+	isDeleted = request.get('isDeleted', False)
 
-	isApproved = 1 if isApproved == 'true' else 0
-	isHighlighted = 1 if isHighlighted == 'true' else 0
-	isEdited = 1 if isEdited == 'true' else 0
-	isSpam = 1 if isSpam == 'true' else 0
-	isDeleted = 1 if isDeleted == 'true' else 0
+	isApproved = 1 if isApproved == True else 0
+	isHighlighted = 1 if isHighlighted == True else 0
+	isEdited = 1 if isEdited == True else 0
+	isSpam = 1 if isSpam == True else 0
+	isDeleted = 1 if isDeleted == True else 0
 
 	query = '''insert into Post 
 				(threadId, userEmail, parent, datePost, message, 
@@ -96,23 +101,28 @@ def createPost(request):
 				values (%s,%s,%s,%s,%s,
 					%s, %s, %s, %s, %s, 
 					%s); '''
-	cursor.execute(query)
 
-	try:			 
-		cursor.execute(query, (threadId, userEmail, parent, date, message,
+	try:
+		cursor.execute(query, (threadId, userEmail,  parent, date, message,
 					isEdited, isDeleted, isSpam, isHighlighted, isApproved,
 					forumShortName))
+
+		query = ''' select max(LAST_INSERT_ID(PostId) ) from Post '''
+		cursor.execute(query)
+		id =  cursor.fetchone()[0]
+
 		code = 0
-		responseMessage =  getInfoPost(shortName, [], cursor) 
+		responseMessage = getInfoPost(id, [], cursor) 
+
 	except:
-		code = 0
-		responseMessage = getInfoPost(shortName, [], cursor)
+		code = 1
+		responseMessage = "Parent post or thread or forum or user not found"
 
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
 
-
+@csrf_exempt 
 def detailsPost(request):
 	cursor = connection.cursor()
 
@@ -132,7 +142,7 @@ def detailsPost(request):
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
-
+@csrf_exempt 
 def listPost(request):
 	cursor = connection.cursor()
 
@@ -181,12 +191,13 @@ def listPost(request):
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
-
-def removePost(request):
+@csrf_exempt 
+def removePost(request1):
 	cursor = connection.cursor()
+ 	request = json.loads(request1.body)	
 
 	#Post
-	postId = request.GET['post']	
+	postId = request['post']	
 
 	query = "update Post set isDeleted = %s where postId = %s;"	
 
@@ -203,11 +214,13 @@ def removePost(request):
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
-def restorePost(request):
+@csrf_exempt 
+def restorePost(request1):
 	cursor = connection.cursor()
+ 	request = json.loads(request1.body)	
 
 	#Post
-	postId = request.GET['post']	
+	postId = request['post']	
 
 	query = "update Post set isDeleted = %s where postId = %s;"	
 
@@ -226,13 +239,14 @@ def restorePost(request):
 
 
 
-
-def updatePost(request):
+@csrf_exempt 
+def updatePost(request1):
 	cursor = connection.cursor()
+ 	request = json.loads(request1.body)	
 
 	#обязательные POST
-	message = request.GET['message']
-	postId = request.GET['post']
+	message = request['message']
+	postId = request['post']
 
 	query = '''update Post 
 				set message = %s 
@@ -249,12 +263,14 @@ def updatePost(request):
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
-def votePost(request):
+@csrf_exempt 
+def votePost(request1):
 	cursor = connection.cursor()
+ 	request = json.loads(request1.body)	
 
 	#обязательные POST
-	vote = request.GET['vote']
-	postId = request.GET['post']
+	vote = request['vote']
+	postId = request['post']
 
 
 	query1 = '''update Post 
@@ -271,6 +287,9 @@ def votePost(request):
 			cursor.execute(query1, (postId))
 		else:
 			cursor.execute(query2, (postId))
+
+		query = ''' update Post set points = likes - dislikes where postId = %s '''	
+		cursor.execute(query, (postId))	
 
 		code = 0
 		responseMessage = getInfoPost(postId, [], cursor)

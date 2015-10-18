@@ -1,27 +1,17 @@
 # -*- coding: utf-8 -*-
-
+import json
+from datetime import datetime
 from django.http import JsonResponse
 from django.db import connection
-
-#from views.User import getInfoUser
-#from views.Forum import getInfoForum
-
-def setIntFild(Table, sampleField, sampleValue, setField, value, cursor):
-
-	# query = "update %s set %s = %s where %s = %s "
-
-	# cursor.execute(query, (Table, Field, value, sampleField, sampleValue))
-	query = "update %s set isClosed = 0 where %s = %s;"	
-
-	cursor.execute(query, (Table, sampleField, sampleValue))
-	return
+from django.views.decorators.csrf import csrf_exempt
 
 def getInfoThread(id, related, cursor):
+	id = int(id)
 	query = '''select date, forumShortName, isClosed, isDeleted, message, slug, title, userEmail, likes, dislikes, points
 				from Thread
-				where threadId = %s limit 1 ; '''  
+				where threadId = %s limit 1 ; ''' % (id)  
 
-	cursor.execute(query, (id))
+	cursor.execute(query)
 	rowThread = cursor.fetchone()
 
 	isClosed = True if rowThread[2] == 1 else False
@@ -30,7 +20,7 @@ def getInfoThread(id, related, cursor):
 	forumShortName = rowThread[1]
 	userEmail = rowThread[7]
 
-	d = { "date": rowThread[0],
+	d = { "date": datetime.strftime(rowThread[0], '%Y-%m-%d %H:%M:%S'),
 	        "forum": forumShortName,
 	        "id": id,
 	        "isClosed": isClosed,
@@ -42,66 +32,66 @@ def getInfoThread(id, related, cursor):
 	        "dislikes": rowThread[9],
 			"likes": rowThread[8],
 			"points": rowThread[10],
+			"posts": 0
 		}
 
-	from views.User import getInfoUser
+	query = ''' select count(postId) from Post where threadId = %s and isDeleted = 0 ''' % (id)
+	cursor.execute(query)	
+	d.update({'posts': int(cursor.fetchone()[0])})
 
+	from views.User import getInfoUser
 	if 'user' in related:
 		d.update({'user': getInfoUser(userEmail, ['followers', 'following', 'subscriptions'], cursor)})	
-
 	del getInfoUser
-	from views.Forum import getInfoForum
 
+	from views.Forum import getInfoForum
 	if 'forum' in related:
 		d.update({'forum': getInfoForum(forumShortName, [], cursor)})	
 	del getInfoForum
+
 	return d
 
-def createThread(request):
+@csrf_exempt 
+def createThread(request1):
 	cursor = connection.cursor()
+ 	request = json.loads(request1.body)	
 
 	#обязательные POST
-	date = request.GET['date']
-	forumShortName = request.GET['forum']
-	message = request.GET['message']
-	userEmail = request.GET['user']
-	title = request.GET['title']
-	slug = request.GET['slug']
-	isClosed = request.GET.get('isClosed', 'false')
+	date = request['date']
+	forumShortName = request['forum']
+	message = request['message']
+	userEmail = request['user']
+	title = request['title']
+	slug = request['slug']
+	isClosed = request.get('isClosed', False)
 
 	#опциональные POST
-	isDeleted = request.GET.get('isDeleted', 'false')
+	isDeleted = request.get('isDeleted', False)
 
-	isDeleted = 1 if isDeleted == 'true' else 0
-	isClosed = 1 if isClosed == 'true' else 0
+	isDeleted = 1 if isDeleted == True else 0
+	isClosed = 1 if isClosed == True else 0
 
 	query = ''' insert into Thread 
 				(forumShortName, userEmail, title, slug, message, date, isClosed, isDeleted) 
-				values (%s,%s,%s,%s,%s,%s,%s, %s); ''' 
+				values (%s,%s,%s,%s,%s,%s,%s,%s); ''' 
 
 	try:			 
 		cursor.execute(query, (forumShortName, userEmail, title, slug, message,	date, isClosed, isDeleted))
 
-		query = ''' select max(LAST_INSERT_ID(threadId) ) 
-				from Thread '''
+		query = ''' select max(LAST_INSERT_ID(threadId) ) from Thread '''
 		cursor.execute(query)
 		id =  cursor.fetchone()[0]
 
 		code = 0
 		responseMessage =  getInfoThread(id, [], cursor)
 	except:
-		query = ''' select max(LAST_INSERT_ID(threadId))  
-				from Thread '''
-		cursor.execute(query)
-		id =  cursor.fetchone()[0]
-
-		code = 0
-		responseMessage = getInfoThread(id, [], cursor)
+		code = 1
+		responseMessage = "Parent forum or user not found"
 
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
-
+@csrf_exempt 
 def detailsThread(request):
 	cursor = connection.cursor()
 
@@ -120,6 +110,7 @@ def detailsThread(request):
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
+@csrf_exempt 
 def listThread(request):
 	cursor = connection.cursor()
 
@@ -147,7 +138,10 @@ def listThread(request):
 		
 	try:
 		if userEmail != '':
+			from views.User import getInfoUser
+
 			getInfoUser(userEmail, [], cursor)
+			del getInfoUser
 
 		from views.Forum import getInfoForum
 
@@ -172,19 +166,22 @@ def listThread(request):
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
+@csrf_exempt 
 def listPostsThread(request):
 	cursor = connection.cursor()
 
 	responseMessage = "Thread not found"
 
-	response = { "code": code, "response": responseMessage}
+	response = { "code": 3, "response": responseMessage}
 	return JsonResponse(response)
 
-def openThread(request):
+@csrf_exempt 
+def openThread(request1):
 	cursor = connection.cursor()
+ 	request = json.loads(request1.body)	
 
 	#Post
-	threadId = request.GET['thread']	
+	threadId = request['thread']	
 
 	query = "update Thread set isClosed = %s where threadId = %s;"	
 
@@ -201,16 +198,21 @@ def openThread(request):
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
-def removeThread(request):
+@csrf_exempt 
+def removeThread(request1):
 	cursor = connection.cursor()
+ 	request = json.loads(request1.body)	
 
 	#Post
-	threadId = request.GET['thread']	
+	threadId = request['thread']	
 
-	query = "update Thread set isDeleted = %s where threadId = %s;"	
+	query = "update Thread set isDeleted = %s where threadId = %s "	
 
 	try:
 		getInfoThread(threadId, [], cursor)
+		cursor.execute(query, (1, threadId))
+
+		query = "update Post set isDeleted = %s where threadId = %s;"	
 		cursor.execute(query, (1, threadId))
 
 		responseMessage = { "thread": threadId }
@@ -222,16 +224,21 @@ def removeThread(request):
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
-def restoreThread(request):
+@csrf_exempt 
+def restoreThread(request1):
 	cursor = connection.cursor()
+ 	request = json.loads(request1.body)	
 
 	#Post
-	threadId = request.GET['thread']	
+	threadId = request['thread']	
 
 	query = "update Thread set isDeleted = %s where threadId = %s;"	
 
 	try:
 		getInfoThread(threadId, [], cursor)
+		cursor.execute(query, (0, threadId))
+
+		query = "update Post set isDeleted = %s where threadId = %s;"	
 		cursor.execute(query, (0, threadId))
 
 		responseMessage = { "thread": threadId }
@@ -243,12 +250,14 @@ def restoreThread(request):
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
-def subscribeThread(request):
+@csrf_exempt 
+def subscribeThread(request1):
 	cursor = connection.cursor()
+ 	request = json.loads(request1.body)	
 
 	#Post
-	threadId = request.GET['thread']
-	userEmail = request.GET['user']	
+	threadId = request['thread']
+	userEmail = request['user']	
 
 	query = '''insert into Subscriber 
 				(userEmail, threadId) 
@@ -256,7 +265,9 @@ def subscribeThread(request):
 
 	try:
 		getInfoThread(threadId, [], cursor)
+		from views.User import getInfoUser
 		getInfoUser(userEmail, [], cursor)
+		del getInfoUser
 
 		try:
 			cursor.execute(query, (userEmail, threadId))
@@ -272,20 +283,24 @@ def subscribeThread(request):
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
-def unsubscribeThread(request):
+@csrf_exempt 
+def unsubscribeThread(request1):
 	cursor = connection.cursor()
+ 	request = json.loads(request1.body)	
 
 	#Post
-	threadId = request.GET['thread']
-	userEmail = request.GET['user']	
+	threadId = request['thread']
+	userEmail = request['user']	
 
 	query = '''delete from Subscriber 
 				where userEmail = %s and threadId = %s ''' 
 
 	try:
 		getInfoThread(threadId, [], cursor)
-		getInfoUser(userEmail, [], cursor)
+		from views.User import getInfoUser
 
+		getInfoUser(userEmail, [], cursor)
+		del getInfoUser
 		try:
 			cursor.execute(query, (userEmail, threadId))
 		except:
@@ -300,13 +315,15 @@ def unsubscribeThread(request):
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
-def updateThread(request):
+@csrf_exempt 
+def updateThread(request1):
 	cursor = connection.cursor()
+ 	request = json.loads(request1.body)	
 
 	#обязательные POST
-	message = request.GET['message']
-	slug = request.GET['slug']
-	threadId = request.GET['thread']
+	message = request['message']
+	slug = request['slug']
+	threadId = request['thread']
 
 	query = '''update Thread 
 				set message = %s, slug = %s 
@@ -323,12 +340,14 @@ def updateThread(request):
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
-def voteThread(request):
+@csrf_exempt 
+def voteThread(request1):
 	cursor = connection.cursor()
+ 	request = json.loads(request1.body)	
 
 	#обязательные POST
-	vote = request.GET['vote']
-	threadId = request.GET['thread']
+	vote = request['vote']
+	threadId = request['thread']
 
 
 	query1 = '''update Thread 
@@ -339,18 +358,14 @@ def voteThread(request):
 				set dislikes = dislikes + 1 
 				where threadId = %s'''
 
-	
-	query = '''update %s 
-				set likes = likes + 1 
-				where threadId = %s''' 
-	cursor.execute(query % ("Thread", threadId))
-	
-
 	try:
 		if vote == '1':
 			cursor.execute(query1, (threadId))
 		else:
 			cursor.execute(query2, (threadId))
+
+		query = ''' update Thread set points = likes - dislikes where threadId = %s '''	
+		cursor.execute(query, (threadId))
 
 		code = 0
 		responseMessage = getInfoThread(threadId, [], cursor)
@@ -363,3 +378,25 @@ def voteThread(request):
 
 
 
+@csrf_exempt 
+def closeThread(request1):
+	cursor = connection.cursor()
+ 	request = json.loads(request1.body)	
+
+	#Post
+	threadId = request['thread']	
+
+	query = "update Thread set isClosed = %s where threadId = %s;"	
+
+	try:
+		getInfoThread(threadId, [], cursor)
+		cursor.execute(query, (1, threadId))
+
+		responseMessage = { "thread": threadId }
+		code = 0
+	except:
+		code = 1
+		responseMessage = "Thread not found"
+
+	response = { "code": code, "response": responseMessage}
+	return JsonResponse(response)

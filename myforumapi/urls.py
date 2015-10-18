@@ -43,6 +43,7 @@ from views.Thread import subscribeThread
 from views.Thread import  unsubscribeThread
 from views.Thread import updateThread
 from views.Thread import  voteThread
+from views.Thread import  closeThread
 from views.Post import createPost
 from views.Post import detailsPost
 from views.Post import listPost
@@ -90,6 +91,7 @@ urlpatterns = [
     url(r'^db/api/thread/unsubscribe/$', unsubscribeThread),
     url(r'^db/api/thread/update/$', updateThread),
     url(r'^db/api/thread/vote/$', voteThread),
+    url(r'^db/api/thread/close/$', closeThread),
 
     #Post
     url(r'^db/api/post/create/$', createPost),

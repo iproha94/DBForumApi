@@ -4,25 +4,39 @@ from django.http import JsonResponse
 from django.db import connection
 
 from views.Post import getInfoPost
+import json
+from django.views.decorators.csrf import csrf_exempt
 
-#получить инфу о пользователе по емейлу
+##получить инфу о пользователе по емейлу
 def getInfoUser(email, related, cursor):
 	query = '''select userId, username, about, name, email, isAnonymous
 				from User
-				where email = '%s' limit 1 ;
-			''' % (email) 
+				where email = '%s' limit 1 ; ''' % (email) 
 
 	cursor.execute(query)
 	rowUser = cursor.fetchone()
 
 	isAnonymous = True if rowUser[5] == 1 else False
 
-	d = { "about": rowUser[2],
+
+	username = rowUser[1]
+	if username == 'NULL':
+		username = None
+
+	about = rowUser[2]
+	if about == 'NULL':
+		about = None
+
+	name = rowUser[3]
+	if name == 'NULL':
+		name = None
+
+	d = { "about": about,
 	        "email": email,
 	        "id": rowUser[0],
 	        "isAnonymous": isAnonymous,
-	        "name": rowUser[3],
-	        "username": rowUser[1]
+	        "name": name,
+	        "username": username
 		}
 
 	if 'followers' in related:
@@ -66,23 +80,33 @@ def getInfoUser(email, related, cursor):
 
 	return d
 
-def createUser(request):
+@csrf_exempt 
+def createUser(request1):
 	cursor = connection.cursor()
 
+ 	request = json.loads(request1.body)	
 	#обязательные POST
-	username = request.GET['username']
-	about = request.GET['about']
-	name = request.GET['name']
-	email = request.GET['email']
+	username = request['username']
+	about = request['about']
+	name = request['name']
+	email = request['email']
 
 	#опциональные POST
-	isAnonymous = request.GET.get('isAnonymous', 'false')
+	isAnonymous = request.get('isAnonymous', False)
 
-	isAnonymous = 1 if isAnonymous == 'true' else 0
+
+	if username == None:
+		username = 'NULL'
+	if about == None:
+		about = 'NULL'
+	if name == None:
+		name = 'NULL'
+
+	isAnonymous = 1 if isAnonymous == True else 0
 
 	query = '''insert into User 
 				(username, about, isAnonymous, name, email) 
-				values ('%s','%s','%d','%s','%s');
+				values ('%s','%s',%s,'%s','%s');
 			''' % (username, about, isAnonymous, name, email)
 	
 	try:
@@ -97,7 +121,7 @@ def createUser(request):
 	return JsonResponse(response)
 
 
-
+@csrf_exempt 
 def detailsUser(request):
 	cursor = connection.cursor()
 
@@ -114,12 +138,14 @@ def detailsUser(request):
 	response = { "code": code, "response": response}
 	return JsonResponse(response)
 
-def followUser(request):
+@csrf_exempt 
+def followUser(request1):
 	cursor = connection.cursor()
+ 	request = json.loads(request1.body)	
 
 	#обязательные POST
-	followerEmail = request.GET['follower']		
-	followeeEmail = request.GET['followee']
+	followerEmail = request['follower']		
+	followeeEmail = request['followee']
 
 	query = '''insert into Follower 
 				(followerEmail, followeeEmail) 
@@ -129,14 +155,15 @@ def followUser(request):
 	try:
 		cursor.execute(query)
 		code = 0
-		response = getInfoUser(followerEmail, ['followers', 'following', 'subscriptions'], cursor)
+		responseMessage = getInfoUser(followerEmail, ['followers', 'following', 'subscriptions'], cursor)
 	except:
 		code = 1
-		response = "User not found"
+		responseMessage = "User not found"
 
-	response = { "code": code, "response": response}
+	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
+@csrf_exempt 
 def listFollowers(request):
 	cursor = connection.cursor()
 
@@ -148,14 +175,14 @@ def listFollowers(request):
 	order = request.GET.get('order', 'desc')
 	since_id = request.GET.get('since_id', None)
 
-	query = '''select fer.followerEmail, u.name followerName, u.userId followerId
+	query = '''select fer.followerEmail, u.name followerName, u.userId
 				from Follower fer, User u
 				where u.email = fer.followerEmail 
 					and fer.followeeEmail = '%s'
 			''' % (email) 
 
 	if since_id is not None:
-		query += " and followerId >= %s " % (since_id)
+		query += " and userId >= %s " % (since_id)
 
 	query += " order by followerName %s " % (order)
 
@@ -174,14 +201,15 @@ def listFollowers(request):
 			 d.append(getInfoUser(row[0], ['followers', 'following', 'subscriptions'], cursor))
 
 		code = 0
-		response = d
+		responseMessage = d
 	except:
 		code = 1
-		response = "User not found"
+		responseMessage = "User not found"
 
-	response = { "code": code, "response": response}
+	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
+@csrf_exempt 
 def listFollowing(request):
 	cursor = connection.cursor()
 
@@ -219,21 +247,22 @@ def listFollowing(request):
 			 d.append(getInfoUser(row[0], ['followers', 'following', 'subscriptions'], cursor))
 
 		code = 0
-		response = d
+		responseMessage = d
 	except:
 		code = 1
-		response = "User not found"
+		responseMessage = "User not found"
 
-	response = { "code": code, "response": response}
+	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
-
-def unfollowUser(request):
+@csrf_exempt 
+def unfollowUser(request1):
 	cursor = connection.cursor()
+ 	request = json.loads(request1.body)	
 
 	#обязательные POST
-	followerEmail = request.GET['follower']		
-	followeeEmail = request.GET['followee']
+	followerEmail = request['follower']		
+	followeeEmail = request['followee']
 
 	query = '''delete from Follower 
 				where followerEmail = %s and followeeEmail = %s ;'''
@@ -249,13 +278,15 @@ def unfollowUser(request):
 	response = { "code": code, "response": response}
 	return JsonResponse(response)
 
-def updateProfileUser(request):
+@csrf_exempt 
+def updateProfileUser(request1):
 	cursor = connection.cursor()
+ 	request = json.loads(request1.body)	
 
 	#обязательные POST
-	about = request.GET['about']
-	name = request.GET['name']
-	email = request.GET['user']
+	about = request['about']
+	name = request['name']
+	email = request['user']
 
 	query = '''update User 
 				set about = %s, name = %s 
@@ -272,6 +303,7 @@ def updateProfileUser(request):
 	response = { "code": code, "response": response}
 	return JsonResponse(response)
 
+@csrf_exempt 
 def listPostsUser(request):
 	cursor = connection.cursor()
 
@@ -296,21 +328,21 @@ def listPostsUser(request):
 	if limit is not None:
 		query += " limit %s " % (limit)
 		
-	# try:
-	getInfoUser(userEmail, [], cursor)
+	try:
+		getInfoUser(userEmail, [], cursor)
 
-	cursor.execute(query)
-	rowsPost = cursor.fetchall()
+		cursor.execute(query)
+		rowsPost = cursor.fetchall()
 
-	d = [];
-	for row in rowsPost:
-		 d.append(getInfoPost(row[0], [], cursor))
+		d = [];
+		for row in rowsPost:
+			 d.append(getInfoPost(row[0], [], cursor))
 
-	code = 0
-	responseMessage = d
-	# except:
-	# 	code = 1
-	# 	responseMessage = "User not found"
+		code = 0
+		responseMessage = d
+	except:
+	 	code = 1
+	 	responseMessage = "User not found"
 
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)

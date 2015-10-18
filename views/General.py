@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
+import json
 
 from django.http import JsonResponse
 from django.db import connection
+from django.views.decorators.csrf import csrf_exempt
 
+@csrf_exempt 
 def clear(request):
 	cursor = connection.cursor()
 
@@ -17,11 +20,12 @@ def clear(request):
 	cursor.execute(query)
 
 	code = 0
-	responseMessage = "OK"
+	responseMessage = "OKK"
 	response = { "code": code, "response": responseMessage }
 
 	return JsonResponse(response)
 
+@csrf_exempt 
 def status(request):
 	cursor = connection.cursor()
 

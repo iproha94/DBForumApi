@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
+import json
 
 from django.http import JsonResponse
 from django.db import connection
-
-#from views.User import getInfoUser
-#from views.Post import getInfoPost
+from django.views.decorators.csrf import csrf_exempt
 
 def getInfoForum(shortname, related, cursor):
 	query = '''select forumId, userEmail, shortName, name
@@ -34,13 +33,15 @@ def getInfoForum(shortname, related, cursor):
 	del getInfoUser
 	return d
 
-def createForum(request):
+@csrf_exempt 
+def createForum(request1):
 	cursor = connection.cursor()
+ 	request = json.loads(request1.body)	
 
 	#обязательные POST
-	name = request.GET['name']
-	shortName = request.GET['short_name']
-	userEmail = request.GET['user']
+	name = request['name']
+	shortName = request['short_name']
+	userEmail = request['user']
 
 	query = '''insert into Forum 
 				(userEmail, shortName, name) 
@@ -57,6 +58,7 @@ def createForum(request):
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
+@csrf_exempt 
 def detailsForum(request):
 	cursor = connection.cursor()
 
@@ -76,6 +78,7 @@ def detailsForum(request):
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
+@csrf_exempt 
 def listUsersForum(request):
 	cursor = connection.cursor()
 
@@ -111,7 +114,7 @@ def listUsersForum(request):
 
 		d = [];
 		for row in rowsUser:
-			 d.append(getInfoUser(row[0], [], cursor))
+			 d.append(getInfoUser(row[0], ['followers', 'following', 'subscriptions'], cursor))
 
 		del getInfoUser
 		code = 0
@@ -123,6 +126,7 @@ def listUsersForum(request):
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
+@csrf_exempt 
 def listPostsForum(request):
 	cursor = connection.cursor()
 
@@ -169,6 +173,7 @@ def listPostsForum(request):
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
+@csrf_exempt 
 def listThreadsForum(request):
 	cursor = connection.cursor()
 
@@ -182,13 +187,13 @@ def listThreadsForum(request):
 	related = request.GET.getlist('related', [])
 
 	query = '''select threadId
-				from Post
+				from Thread
 				where forumShortName = '%s' ''' % (shortName) 
 
 	if since is not None:
-		query += " and datePost >= '%s' " % (since)
+		query += " and date >= '%s' " % (since)
 
-	query += " order by datePost %s " % (orderDate)
+	query += " order by date %s " % (orderDate)
 
 	if limit is not None:
 		query += " limit %s " % (limit)
