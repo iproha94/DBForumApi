@@ -272,24 +272,17 @@ def votePost(request1):
 	vote = request['vote']
 	postId = request['post']
 
+	vote = 'likes' if vote == 1 else 'dislikes'
 
-	query1 = '''update Post 
-				set likes = likes + 1 
+	query = '''update Post 
+				set %s = %s + 1 
 				where postId = %s'''
 
-	query2 = '''update Post 
-				set dislikes = dislikes + 1 
-				where postId = %s'''
-
-	
 	try:
-		if vote == '1':
-			cursor.execute(query1, (postId))
-		else:
-			cursor.execute(query2, (postId))
+		cursor.execute(query % (vote, vote, postId))
 
 		query = ''' update Post set points = likes - dislikes where postId = %s '''	
-		cursor.execute(query, (postId))	
+		cursor.execute(query % (postId))	
 
 		code = 0
 		responseMessage = getInfoPost(postId, [], cursor)

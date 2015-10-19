@@ -98,14 +98,18 @@ def detailsThread(request):
 	#обязательные GET
 	threadId = request.GET['thread']	
 
-	related = request.GET.getlist('related', [])	
+	related = request.GET.getlist('related', [])
 
-	try:
-		responseMessage =  getInfoThread(threadId, related, cursor) 
-		code = 0
-	except:
-	 	code = 1
-	 	responseMessage = "Thread not found"
+	if "thread" in 	related:
+		code = 3
+	 	responseMessage = "Not valide request"
+	else:
+		try:
+			responseMessage =  getInfoThread(threadId, related, cursor) 
+			code = 0
+		except:
+		 	code = 1
+		 	responseMessage = "Thread not found"
 
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
@@ -170,9 +174,47 @@ def listThread(request):
 def listPostsThread(request):
 	cursor = connection.cursor()
 
-	responseMessage = "Thread not found"
+	#обязательные GET
+	threadId = request.GET['thread']
 
-	response = { "code": 3, "response": responseMessage}
+	#опциональные GET
+	limit = request.GET.get('limit', None)
+	orderDate = request.GET.get('order', 'desc')
+	since = request.GET.get('since', None)
+	sort = request.GET.get('sort', 'flat')
+
+
+	query = '''select postId
+				from Post
+				where threadId = %s	''' % (threadId) 
+
+	if since is not None:
+		query += " and datePost >= '%s' " % (since)
+
+	query += " order by datePost %s " % (orderDate)
+
+	if limit is not None:
+		query += " limit %s " % (limit)
+		
+	try:
+		getInfoThread(threadId, [], cursor)
+
+		cursor.execute(query)
+		rowsPost = cursor.fetchall()
+
+		from views.Post import getInfoPost
+		d = [];
+		for row in rowsPost:
+			 d.append(getInfoPost(row[0], [], cursor))
+		del getInfoPost
+
+		code = 0
+		responseMessage = d
+	except:
+		code = 1
+		responseMessage = "Thread not found"
+
+	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
 
 @csrf_exempt 
@@ -203,17 +245,15 @@ def removeThread(request1):
 	cursor = connection.cursor()
  	request = json.loads(request1.body)	
 
-	#Post
 	threadId = request['thread']	
 
-	query = "update Thread set isDeleted = %s where threadId = %s "	
+	query = '''update Thread set isDeleted = %s where threadId = %s;
+				update Post set isDeleted = %s where threadId = %s;'''	
 
 	try:
 		getInfoThread(threadId, [], cursor)
-		cursor.execute(query, (1, threadId))
 
-		query = "update Post set isDeleted = %s where threadId = %s;"	
-		cursor.execute(query, (1, threadId))
+		cursor.execute(query % (1, threadId, 1, threadId))
 
 		responseMessage = { "thread": threadId }
 		code = 0
@@ -229,17 +269,15 @@ def restoreThread(request1):
 	cursor = connection.cursor()
  	request = json.loads(request1.body)	
 
-	#Post
-	threadId = request['thread']	
+	threadId = request['thread']
 
-	query = "update Thread set isDeleted = %s where threadId = %s;"	
+	query = '''update Thread set isDeleted = %s where threadId = %s;
+				update Post set isDeleted = %s where threadId = %s;	'''	
 
 	try:
 		getInfoThread(threadId, [], cursor)
-		cursor.execute(query, (0, threadId))
 
-		query = "update Post set isDeleted = %s where threadId = %s;"	
-		cursor.execute(query, (0, threadId))
+		cursor.execute(query % (0, threadId, 0, threadId))
 
 		responseMessage = { "thread": threadId }
 		code = 0
@@ -349,23 +387,17 @@ def voteThread(request1):
 	vote = request['vote']
 	threadId = request['thread']
 
+	vote = 'likes' if vote == 1 else 'dislikes'
 
-	query1 = '''update Thread 
-				set likes = likes + 1 
-				where threadId = %s'''
-
-	query2 = '''update Thread 
-				set dislikes = dislikes + 1 
+	query = '''update Thread 
+				set %s = %s + 1 
 				where threadId = %s'''
 
 	try:
-		if vote == '1':
-			cursor.execute(query1, (threadId))
-		else:
-			cursor.execute(query2, (threadId))
+		cursor.execute(query % (vote, vote, threadId))
 
-		query = ''' update Thread set points = likes - dislikes where threadId = %s '''	
-		cursor.execute(query, (threadId))
+		query = ''' update Thread set points = (likes - dislikes) where threadId = %s '''	
+		cursor.execute(query % (threadId))
 
 		code = 0
 		responseMessage = getInfoThread(threadId, [], cursor)

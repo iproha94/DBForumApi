@@ -95,22 +95,21 @@ def createUser(request1):
 	isAnonymous = request.get('isAnonymous', False)
 
 
-	if username == None:
-		username = 'NULL'
-	if about == None:
-		about = 'NULL'
-	if name == None:
-		name = 'NULL'
+	#if username == None:
+	#	username = 'NULL'
+	#if about == None:
+	#	about = 'NULL'
+	#if name == None:
+	#	name = 'NULL'
 
 	isAnonymous = 1 if isAnonymous == True else 0
 
 	query = '''insert into User 
 				(username, about, isAnonymous, name, email) 
-				values ('%s','%s',%s,'%s','%s');
-			''' % (username, about, isAnonymous, name, email)
+				values ( %s, %s, %s, %s, %s);'''  
 	
 	try:
-		cursor.execute(query)
+		cursor.execute(query, (username, about, isAnonymous, name, email))
 		code = 0
 		responseMessage = getInfoUser(email, [], cursor)
 	except:
