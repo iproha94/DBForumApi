@@ -146,7 +146,7 @@ def followUser(request1):
 	followerEmail = request['follower']		
 	followeeEmail = request['followee']
 
-	query = '''insert into Follower 
+	query = '''insert ignore into Follower 
 				(followerEmail, followeeEmail) 
 				values ('%s','%s');
 			''' % (followerEmail, followeeEmail)

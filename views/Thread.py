@@ -7,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 def getInfoThread(id, related, cursor):
 	id = int(id)
-	query = '''select date, forumShortName, isClosed, isDeleted, message, slug, title, userEmail, likes, dislikes, points
+	query = '''select date, forumShortName, isClosed, isDeleted, message, slug, title, userEmail, likes, dislikes, points, posts
 				from Thread
 				where threadId = %s limit 1 ; ''' % (id)  
 
@@ -32,12 +32,8 @@ def getInfoThread(id, related, cursor):
 	        "dislikes": rowThread[9],
 			"likes": rowThread[8],
 			"points": rowThread[10],
-			"posts": 0
+			"posts": rowThread[11]
 		}
-
-	query = ''' select count(postId) from Post where threadId = %s and isDeleted = 0 ''' % (id)
-	cursor.execute(query)	
-	d.update({'posts': int(cursor.fetchone()[0])})
 
 	from views.User import getInfoUser
 	if 'user' in related:
@@ -71,9 +67,9 @@ def createThread(request1):
 	isDeleted = 1 if isDeleted == True else 0
 	isClosed = 1 if isClosed == True else 0
 
-	query = ''' insert into Thread 
-				(forumShortName, userEmail, title, slug, message, date, isClosed, isDeleted) 
-				values (%s,%s,%s,%s,%s,%s,%s,%s); ''' 
+	query = ''' insert ignore into Thread 
+				(forumShortName, userEmail, title, slug, message, date, isClosed, isDeleted, posts, allposts) 
+				values (%s,%s,%s,%s,%s,%s,%s,%s, 0, 0); ''' 
 
 	try:			 
 		cursor.execute(query, (forumShortName, userEmail, title, slug, message,	date, isClosed, isDeleted))
@@ -247,7 +243,7 @@ def removeThread(request1):
 
 	threadId = request['thread']	
 
-	query = '''update Thread set isDeleted = %s where threadId = %s;
+	query = '''update Thread set isDeleted = %s, posts = 0 where threadId = %s;
 				update Post set isDeleted = %s where threadId = %s;'''	
 
 	try:
@@ -271,7 +267,7 @@ def restoreThread(request1):
 
 	threadId = request['thread']
 
-	query = '''update Thread set isDeleted = %s where threadId = %s;
+	query = '''update Thread set isDeleted = %s, posts = allposts where threadId = %s;
 				update Post set isDeleted = %s where threadId = %s;	'''	
 
 	try:
@@ -297,7 +293,7 @@ def subscribeThread(request1):
 	threadId = request['thread']
 	userEmail = request['user']	
 
-	query = '''insert into Subscriber 
+	query = '''insert ignore into Subscriber 
 				(userEmail, threadId) 
 				values (%s,%s); ''' 
 

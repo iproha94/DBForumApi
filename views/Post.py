@@ -94,7 +94,7 @@ def createPost(request1):
 	isSpam = 1 if isSpam == True else 0
 	isDeleted = 1 if isDeleted == True else 0
 
-	query = '''insert into Post 
+	query = '''insert ignore into Post 
 				(threadId, userEmail, parent, datePost, message, 
 					isEdited, isDeleted, isSpam, isHighlighted, isApproved,
 					forumShortName) 
@@ -110,6 +110,10 @@ def createPost(request1):
 		query = ''' select max(LAST_INSERT_ID(PostId) ) from Post '''
 		cursor.execute(query)
 		id =  cursor.fetchone()[0]
+
+		if isDeleted == 0 :
+			query = ''' update Thread set posts = posts + 1, allposts = allposts + 1 where threadId = %s '''
+			cursor.execute(query, (threadId))
 
 		code = 0
 		responseMessage = getInfoPost(id, [], cursor) 
@@ -202,8 +206,11 @@ def removePost(request1):
 	query = "update Post set isDeleted = %s where postId = %s;"	
 
 	try:
-		getInfoPost(postId, [], cursor)
+		temp = getInfoPost(postId, [], cursor)
 		cursor.execute(query, (1, postId))
+
+		query = ''' update Thread set posts = posts - 1 where threadId = %s '''
+		cursor.execute(query, (temp["thread"]))
 
 		responseMessage = { "post": postId }
 		code = 0
@@ -225,8 +232,11 @@ def restorePost(request1):
 	query = "update Post set isDeleted = %s where postId = %s;"	
 
 	try:
-		getInfoPost(postId, [], cursor)
+		temp = getInfoPost(postId, [], cursor)
 		cursor.execute(query, (0, postId))
+
+		query = ''' update Thread set posts = posts + 1 where threadId = %s '''
+		cursor.execute(query, (temp["thread"]))
 
 		responseMessage = { "post": postId }
 		code = 0

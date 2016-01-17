@@ -43,7 +43,7 @@ def createForum(request1):
 	shortName = request['short_name']
 	userEmail = request['user']
 
-	query = '''insert into Forum 
+	query = '''insert ignore into Forum 
 				(userEmail, shortName, name) 
 				values (%s,%s,%s);'''
 
@@ -53,7 +53,7 @@ def createForum(request1):
 		responseMessage =  getInfoForum(shortName, [], cursor) 
 	except:
 		code = 0
-		responseMessage = getInfoForum(shortName, [], cursor)
+		responseMessage = request
 
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)

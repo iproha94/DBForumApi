@@ -1,0 +1,14 @@
+2907dump.sql
+WorkBench model/modelMyForumApi.mwb.beforefix
+myforumapi/__init__.pyc
+myforumapi/settings.pyc
+myforumapi/urls.pyc
+myforumapi/wsgi.pyc
+views/FillDB.pyc
+views/Forum.pyc
+views/General.pyc
+views/Post.pyc
+views/Thread.pyc
+views/User.pyc
+views/__init__.pyc
+
