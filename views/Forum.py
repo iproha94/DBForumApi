@@ -90,15 +90,16 @@ def listUsersForum(request):
 	order = request.GET.get('order', 'desc')
 	since_id = request.GET.get('since_id', None)
 
-	query = '''select DISTINCT p.userEmail userEmail, u.name as uname, u.userId as userId
-				from Post p, User u
-				where p.forumShortName = '%s' 
-					and p.userEmail = u.email ''' % (shortName) 
+	query = '''select p.userEmail userEmail, u.name as uname, u.userId as userId
+				from Post p join User u on p.userEmail = u.email
+				where p.forumShortName = '%s'
+				group by  uname, userId 
+			''' % (shortName) 
 
 	if since_id is not None:
 		query += " and userId >= %s " % (since_id)
 
-	query += " order by uname %s " % (order)
+	query += " order by uname %s , userId %s" % (order, order)
 
 	if limit is not None:
 		query += " limit %s " % (limit)
