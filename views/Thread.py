@@ -115,8 +115,8 @@ def listThread(request):
 	cursor = connection.cursor()
 
 	#обязательные GET
-	userEmail = request.GET.get('user', '')
-	forumShortName = request.GET.get('forum', '')
+	userEmail = request.GET.get('user', None)
+	forumShortName = request.GET.get('forum', None)
 
 	#опциональные GET
 	limit = request.GET.get('limit', None)
@@ -124,9 +124,13 @@ def listThread(request):
 	since = request.GET.get('since', None)
 
 	query = '''select threadId
-				from Thread
-				where (userEmail = '%s' or forumShortName = '%s') 
-				''' % (userEmail, forumShortName) 
+				from Thread	'''
+
+	if userEmail is not None:
+		query += " where userEmail = '%s' " % (userEmail)
+
+	if 	forumShortName is not None:
+		query += " where forumShortName = '%s' " % (forumShortName)
 
 	if since is not None:
 		query += " and date >= '%s' " % (since)
@@ -137,7 +141,7 @@ def listThread(request):
 		query += " limit %s " % (limit)
 		
 	try:
-		if userEmail != '':
+		if userEmail is not None:
 			from views.User import getInfoUser
 
 			getInfoUser(userEmail, [], cursor)
@@ -145,7 +149,7 @@ def listThread(request):
 
 		from views.Forum import getInfoForum
 
-		if forumShortName != '':
+		if forumShortName is not None:
 			getInfoForum(forumShortName, [], cursor)
 		
 		del getInfoForum
