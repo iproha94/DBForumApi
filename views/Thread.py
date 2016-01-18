@@ -266,7 +266,7 @@ def removeThread(request1):
 	threadId = request['thread']	
 
 	query = '''update Thread set isDeleted = %s, posts = 0 where threadId = %s limit 1;
-				update Post set isDeleted = %s where threadId = %s limit 1 ;'''	
+				update Post set isDeleted = %s where threadId = %s  ;'''	
 
 	try:
 		getInfoThreadTest(threadId, [], cursor)
@@ -290,7 +290,7 @@ def restoreThread(request1):
 	threadId = request['thread']
 
 	query = '''update Thread set isDeleted = %s, posts = allposts where threadId = %s limit 1 ;
-				update Post set isDeleted = %s where threadId = %s limit 1;	'''	
+				update Post set isDeleted = %s where threadId = %s ;	'''	
 
 	try:
 		getInfoThreadTest(threadId, [], cursor)
