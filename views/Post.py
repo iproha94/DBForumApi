@@ -151,18 +151,27 @@ def listPost(request):
 	cursor = connection.cursor()
 
 	#обязательные GET
-	threadId = request.GET.get('thread', '0')
-	forumShortName = request.GET.get('forum', '')
+	threadId = request.GET.get('thread', None)
+	forumShortName = request.GET.get('forum', None)
 
 	#опциональные GET
 	limit = request.GET.get('limit', None)
 	orderDate = request.GET.get('order', 'desc')
 	since = request.GET.get('since', None)
 
-	query = '''select postId
-				from Post
-				where (threadId = %s or forumShortName = '%s') 
-				''' % (threadId, forumShortName) 
+	#query = '''select postId
+	#			from Post
+#				where (threadId = %s or forumShortName = '%s') 
+#				''' % (threadId, forumShortName) 
+
+
+	query = '''select postId from Post '''
+
+	if threadId is not None:
+		query += " where threadId = %s " % (threadId)
+
+	if forumShortName is not None:
+		query += " where forumShortName = '%s' " % (forumShortName)
 
 	if since is not None:
 		query += " and datePost >= '%s' " % (since)
@@ -172,17 +181,17 @@ def listPost(request):
 	if limit is not None:
 		query += " limit %s " % (limit)
 		
+	d = [];
 	try:
-		if threadId != '0':
+		if threadId is not None:
 			getInfoThread(threadId, [], cursor)
 
-		if forumShortName != '':
+		if forumShortName is not None:
 			getInfoForum(forumShortName, [], cursor)
 
 		cursor.execute(query)
 		rowsPost = cursor.fetchall()
 
-		d = [];
 		for row in rowsPost:
 			 d.append(getInfoPost(row[0], [], cursor))
 
