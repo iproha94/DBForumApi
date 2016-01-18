@@ -5,13 +5,36 @@ from django.db import connection
 
 from views.Forum import getInfoForum
 from views.Thread import getInfoThread
+from views.Forum import getInfoForumTest
+from views.Thread import getInfoThreadTest
 import json
 from datetime import datetime
 
 
 from django.views.decorators.csrf import csrf_exempt
 
+def getInfoPostTest(id, related, cursor):
+	id = int(id)
 
+	query = '''select postId
+				from Post
+				where postId = %s limit 1 ;
+			''' % (id) 
+
+	cursor.execute(query)
+
+	from views.User import getInfoUserTest
+
+	if 'user' in related:
+		getInfoUserTest(userEmail, ['followers', 'following', 'subscriptions'], cursor)	
+
+	del getInfoUserTest
+	
+	if 'forum' in related:
+		getInfoForumTest(forumShortName, [], cursor)
+	
+	if 'thread' in related:
+		getInfoThreadTest(threadId, [], cursor)
 
 def getInfoPost(id, related, cursor):
 	id = int(id)
@@ -184,10 +207,10 @@ def listPost(request):
 	d = [];
 	try:
 		if threadId is not None:
-			getInfoThread(threadId, [], cursor)
+			getInfoThreadTest(threadId, [], cursor)
 
 		if forumShortName is not None:
-			getInfoForum(forumShortName, [], cursor)
+			getInfoForumTest(forumShortName, [], cursor)
 
 		cursor.execute(query)
 		rowsPost = cursor.fetchall()

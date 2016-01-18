@@ -5,6 +5,20 @@ from django.http import JsonResponse
 from django.db import connection
 from django.views.decorators.csrf import csrf_exempt
 
+def getInfoForumTest(shortname, related, cursor):
+	query = '''select shortName
+				from Forum
+				where shortName = '%s' limit 1 ; 
+			''' % (shortname)
+	cursor.execute(query)
+
+	from views.User import getInfoUserTest
+
+	if 'user' in related:
+		getInfoUserTest(userEmail, ['followers', 'following', 'subscriptions'], cursor)	
+	
+	del getInfoUserTest
+
 def getInfoForum(shortname, related, cursor):
 	query = '''select forumId, userEmail, shortName, name
 				from Forum
@@ -106,7 +120,7 @@ def listUsersForum(request):
 		
 	try:
 		#выдаст исключение, если такого  нет
-		getInfoForum(shortName, [], cursor);
+		getInfoForumTest(shortName, [], cursor);
 
 		cursor.execute(query)
 		rowsUser = cursor.fetchall()
@@ -154,7 +168,7 @@ def listPostsForum(request):
 		
 	try:
 	#выдаст исключение, если такого  нет
-		getInfoForum(shortName, [], cursor);
+		getInfoForumTest(shortName, [], cursor);
 
 		cursor.execute(query)
 		rowsPost = cursor.fetchall()
@@ -168,8 +182,8 @@ def listPostsForum(request):
 		code = 0
 		responseMessage = d
 	except:
-			code = 1
-			responseMessage = "Forum not found"
+		code = 1
+		responseMessage = "Forum not found"
 
 	response = { "code": code, "response": responseMessage}
 	return JsonResponse(response)
@@ -201,7 +215,7 @@ def listThreadsForum(request):
 		
 	try:
 	#выдаст исключение, если такого  нет
-		getInfoForum(shortName, [], cursor);
+		getInfoForumTest(shortName, [], cursor);
 
 		cursor.execute(query)
 		rowsThread = cursor.fetchall()

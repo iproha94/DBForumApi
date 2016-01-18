@@ -4,8 +4,20 @@ from django.http import JsonResponse
 from django.db import connection
 
 from views.Post import getInfoPost
+from views.Post import getInfoPostTest
+
 import json
 from django.views.decorators.csrf import csrf_exempt
+
+##получить инфу о пользователе по емейлу
+def getInfoUserTest(email, related, cursor):
+	query = '''select userId, username, about, name, email, isAnonymous
+				from User
+				where email = '%s' limit 1 ; ''' % (email) 
+
+	cursor.execute(query)
+
+	
 
 ##получить инфу о пользователе по емейлу
 def getInfoUser(email, related, cursor):
@@ -189,7 +201,7 @@ def listFollowers(request):
 
 	try:
 		#выдаст исключение, если такого пользователя нет
-		getInfoUser(email, [], cursor);
+		getInfoUserTest(email, [], cursor);
 
 		cursor.execute(query)
 		rowsFollower = cursor.fetchall()
@@ -234,7 +246,7 @@ def listFollowing(request):
 		
 	try:
 		#выдаст исключение, если такого пользователя нет
-		getInfoUser(email, [], cursor);
+		getInfoUserTest(email, [], cursor);
 
 		cursor.execute(query)
 		rowsFollowee = cursor.fetchall()
@@ -326,7 +338,7 @@ def listPostsUser(request):
 		query += " limit %s " % (limit)
 		
 	try:
-		getInfoUser(userEmail, [], cursor)
+		getInfoUserTest(userEmail, [], cursor)
 
 		cursor.execute(query)
 		rowsPost = cursor.fetchall()

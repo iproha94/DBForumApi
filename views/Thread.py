@@ -5,6 +5,24 @@ from django.http import JsonResponse
 from django.db import connection
 from django.views.decorators.csrf import csrf_exempt
 
+def getInfoThreadTest(id, related, cursor):
+	id = int(id)
+	query = '''select threadId
+				from Thread
+				where threadId = %s limit 1 ; ''' % (id)  
+
+	cursor.execute(query)
+
+	from views.User import getInfoUserTest
+	if 'user' in related:
+		getInfoUserTest(userEmail, ['followers', 'following', 'subscriptions'], cursor)	
+	del getInfoUserTest
+
+	from views.Forum import getInfoForumTest
+	if 'forum' in related:
+		getInfoForumTest(forumShortName, [], cursor)
+	del getInfoForumTest
+
 def getInfoThread(id, related, cursor):
 	id = int(id)
 	query = '''select date, forumShortName, isClosed, isDeleted, message, slug, title, userEmail, likes, dislikes, points, posts
@@ -142,17 +160,17 @@ def listThread(request):
 		
 	try:
 		if userEmail is not None:
-			from views.User import getInfoUser
+			from views.User import getInfoUserTest
 
-			getInfoUser(userEmail, [], cursor)
-			del getInfoUser
+			getInfoUserTest(userEmail, [], cursor)
+			del getInfoUserTest
 
-		from views.Forum import getInfoForum
+		from views.Forum import getInfoForumTest
 
 		if forumShortName is not None:
-			getInfoForum(forumShortName, [], cursor)
+			getInfoForumTest(forumShortName, [], cursor)
 		
-		del getInfoForum
+		del getInfoForumTest
 		
 		cursor.execute(query)
 		rowsThread = cursor.fetchall()
@@ -197,7 +215,7 @@ def listPostsThread(request):
 		query += " limit %s " % (limit)
 		
 	try:
-		getInfoThread(threadId, [], cursor)
+		getInfoThreadTest(threadId, [], cursor)
 
 		cursor.execute(query)
 		rowsPost = cursor.fetchall()
@@ -228,7 +246,7 @@ def openThread(request1):
 	query = "update Thread set isClosed = %s where threadId = %s;"	
 
 	try:
-		getInfoThread(threadId, [], cursor)
+		getInfoThreadTest(threadId, [], cursor)
 		cursor.execute(query, (0, threadId))
 
 		responseMessage = { "thread": threadId }
@@ -251,7 +269,7 @@ def removeThread(request1):
 				update Post set isDeleted = %s where threadId = %s;'''	
 
 	try:
-		getInfoThread(threadId, [], cursor)
+		getInfoThreadTest(threadId, [], cursor)
 
 		cursor.execute(query % (1, threadId, 1, threadId))
 
@@ -275,7 +293,7 @@ def restoreThread(request1):
 				update Post set isDeleted = %s where threadId = %s;	'''	
 
 	try:
-		getInfoThread(threadId, [], cursor)
+		getInfoThreadTest(threadId, [], cursor)
 
 		cursor.execute(query % (0, threadId, 0, threadId))
 
@@ -302,10 +320,10 @@ def subscribeThread(request1):
 				values (%s,%s); ''' 
 
 	try:
-		getInfoThread(threadId, [], cursor)
-		from views.User import getInfoUser
-		getInfoUser(userEmail, [], cursor)
-		del getInfoUser
+		getInfoThreadTest(threadId, [], cursor)
+		from views.User import getInfoUserTest
+		getInfoUserTest(userEmail, [], cursor)
+		del getInfoUserTest
 
 		try:
 			cursor.execute(query, (userEmail, threadId))
@@ -334,11 +352,11 @@ def unsubscribeThread(request1):
 				where userEmail = %s and threadId = %s ''' 
 
 	try:
-		getInfoThread(threadId, [], cursor)
-		from views.User import getInfoUser
+		getInfoThreadTest(threadId, [], cursor)
+		from views.User import getInfoUserTest
 
-		getInfoUser(userEmail, [], cursor)
-		del getInfoUser
+		getInfoUserTest(userEmail, [], cursor)
+		del getInfoUserTest
 		try:
 			cursor.execute(query, (userEmail, threadId))
 		except:
@@ -421,7 +439,7 @@ def closeThread(request1):
 	query = "update Thread set isClosed = %s where threadId = %s;"	
 
 	try:
-		getInfoThread(threadId, [], cursor)
+		getInfoThreadTest(threadId, [], cursor)
 		cursor.execute(query, (1, threadId))
 
 		responseMessage = { "thread": threadId }
