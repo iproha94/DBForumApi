@@ -135,7 +135,7 @@ def createPost(request1):
 		id =  cursor.fetchone()[0]
 
 		if isDeleted == 0 :
-			query = ''' update Thread set posts = posts + 1, allposts = allposts + 1 where threadId = %s '''
+			query = ''' update Thread set posts = posts + 1, allposts = allposts + 1 where threadId = %s limit 1 '''
 			cursor.execute(query, (threadId))
 
 		code = 0
@@ -235,13 +235,13 @@ def removePost(request1):
 	#Post
 	postId = request['post']	
 
-	query = "update Post set isDeleted = %s where postId = %s;"	
+	query = "update Post set isDeleted = %s where postId = %s limit 1 ;"	
 
 	try:
 		temp = getInfoPost(postId, [], cursor)
 		cursor.execute(query, (1, postId))
 
-		query = ''' update Thread set posts = posts - 1 where threadId = %s '''
+		query = ''' update Thread set posts = posts - 1 where threadId = %s limit 1 '''
 		cursor.execute(query, (temp["thread"]))
 
 		responseMessage = { "post": postId }
@@ -261,13 +261,13 @@ def restorePost(request1):
 	#Post
 	postId = request['post']	
 
-	query = "update Post set isDeleted = %s where postId = %s;"	
+	query = "update Post set isDeleted = %s where postId = %s limit 1 ;"	
 
 	try:
 		temp = getInfoPost(postId, [], cursor)
 		cursor.execute(query, (0, postId))
 
-		query = ''' update Thread set posts = posts + 1 where threadId = %s '''
+		query = ''' update Thread set posts = posts + 1 where threadId = %s limit 1 '''
 		cursor.execute(query, (temp["thread"]))
 
 		responseMessage = { "post": postId }
@@ -292,7 +292,7 @@ def updatePost(request1):
 
 	query = '''update Post 
 				set message = %s 
-				where postId = %s;	'''
+				where postId = %s limit 1 ;	'''
 	
 	try:
 		cursor.execute(query, (message, postId))
@@ -318,12 +318,12 @@ def votePost(request1):
 
 	query = '''update Post 
 				set %s = %s + 1 
-				where postId = %s'''
+				where postId = %s limit 1 '''
 
 	try:
 		cursor.execute(query % (vote, vote, postId))
 
-		query = ''' update Post set points = likes - dislikes where postId = %s '''	
+		query = ''' update Post set points = likes - dislikes where postId = %s limit 1 '''	
 		cursor.execute(query % (postId))	
 
 		code = 0

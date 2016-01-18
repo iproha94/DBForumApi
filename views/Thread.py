@@ -243,7 +243,7 @@ def openThread(request1):
 	#Post
 	threadId = request['thread']	
 
-	query = "update Thread set isClosed = %s where threadId = %s;"	
+	query = "update Thread set isClosed = %s where threadId = %s limit 1 ;"	
 
 	try:
 		getInfoThreadTest(threadId, [], cursor)
@@ -265,8 +265,8 @@ def removeThread(request1):
 
 	threadId = request['thread']	
 
-	query = '''update Thread set isDeleted = %s, posts = 0 where threadId = %s;
-				update Post set isDeleted = %s where threadId = %s;'''	
+	query = '''update Thread set isDeleted = %s, posts = 0 where threadId = %s limit 1;
+				update Post set isDeleted = %s where threadId = %s limit 1 ;'''	
 
 	try:
 		getInfoThreadTest(threadId, [], cursor)
@@ -289,8 +289,8 @@ def restoreThread(request1):
 
 	threadId = request['thread']
 
-	query = '''update Thread set isDeleted = %s, posts = allposts where threadId = %s;
-				update Post set isDeleted = %s where threadId = %s;	'''	
+	query = '''update Thread set isDeleted = %s, posts = allposts where threadId = %s limit 1 ;
+				update Post set isDeleted = %s where threadId = %s limit 1;	'''	
 
 	try:
 		getInfoThreadTest(threadId, [], cursor)
@@ -383,7 +383,7 @@ def updateThread(request1):
 
 	query = '''update Thread 
 				set message = %s, slug = %s 
-				where threadId = %s;	'''
+				where threadId = %s limit 1 ;	'''
 	
 	try:
 		cursor.execute(query, (message, slug, threadId))
@@ -409,12 +409,12 @@ def voteThread(request1):
 
 	query = '''update Thread 
 				set %s = %s + 1 
-				where threadId = %s'''
+				where threadId = %s limit 1 '''
 
 	try:
 		cursor.execute(query % (vote, vote, threadId))
 
-		query = ''' update Thread set points = (likes - dislikes) where threadId = %s '''	
+		query = ''' update Thread set points = (likes - dislikes) where threadId = %s limit 1 '''	
 		cursor.execute(query % (threadId))
 
 		code = 0
@@ -436,7 +436,7 @@ def closeThread(request1):
 	#Post
 	threadId = request['thread']	
 
-	query = "update Thread set isClosed = %s where threadId = %s;"	
+	query = "update Thread set isClosed = %s where threadId = %s limit 1 ;"	
 
 	try:
 		getInfoThreadTest(threadId, [], cursor)

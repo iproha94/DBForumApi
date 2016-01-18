@@ -299,7 +299,7 @@ def updateProfileUser(request1):
 
 	query = '''update User 
 				set about = %s, name = %s 
-				where email = %s;	'''
+				where email = %s limit 1 ;	'''
 	
 	try:
 		cursor.execute(query, (about, name, email))
