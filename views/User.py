@@ -11,7 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 ##получить инфу о пользователе по емейлу
 def getInfoUserTest(email, related, cursor):
-	query = '''select userId, username, about, name, email, isAnonymous
+	query = '''select email
 				from User
 				where email = '%s' limit 1 ; ''' % (email) 
 

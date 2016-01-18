@@ -23,18 +23,18 @@ def getInfoPostTest(id, related, cursor):
 
 	cursor.execute(query)
 
-	from views.User import getInfoUserTest
+	# from views.User import getInfoUserTest
 
-	if 'user' in related:
-		getInfoUserTest(userEmail, ['followers', 'following', 'subscriptions'], cursor)	
+	# if 'user' in related:
+	# 	getInfoUserTest(userEmail, ['followers', 'following', 'subscriptions'], cursor)	
 
-	del getInfoUserTest
+	# del getInfoUserTest
 	
-	if 'forum' in related:
-		getInfoForumTest(forumShortName, [], cursor)
+	# if 'forum' in related:
+	# 	getInfoForumTest(forumShortName, [], cursor)
 	
-	if 'thread' in related:
-		getInfoThreadTest(threadId, [], cursor)
+	# if 'thread' in related:
+	# 	getInfoThreadTest(threadId, [], cursor)
 
 def getInfoPost(id, related, cursor):
 	id = int(id)
