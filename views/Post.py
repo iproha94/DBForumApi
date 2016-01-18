@@ -107,7 +107,7 @@ def createPost(request1):
 					isEdited, isDeleted, isSpam, isHighlighted, isApproved,
 					forumShortName))
 
-		query = ''' select max(LAST_INSERT_ID(PostId) ) from Post '''
+		query = ''' select LAST_INSERT_ID() '''
 		cursor.execute(query)
 		id =  cursor.fetchone()[0]
 
