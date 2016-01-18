@@ -175,9 +175,8 @@ def listFollowers(request):
 	since_id = request.GET.get('since_id', None)
 
 	query = '''select fer.followerEmail, u.name followerName, u.userId
-				from Follower fer, User u
-				where u.email = fer.followerEmail 
-					and fer.followeeEmail = '%s'
+				from Follower fer join User u on u.email = fer.followerEmail 
+				where fer.followeeEmail = '%s'
 			''' % (email) 
 
 	if since_id is not None:
@@ -221,9 +220,8 @@ def listFollowing(request):
 	since_id = request.GET.get('since_id', None)
 
 	query = '''select fee.followeeEmail, u.name followeeName, u.userId
-				from Follower fee, User u
-				where u.email = fee.followeeEmail 
-					and fee.followerEmail = '%s'
+				from Follower fee join User u ON u.email = fee.followeeEmail 
+				where fee.followerEmail = '%s'
 			''' % (email) 
 
 	if since_id is not None:
