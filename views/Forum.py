@@ -121,7 +121,7 @@ def listUsersForum(request):
 		
 	try:
 		#выдаст исключение, если такого  нет
-		getInfoForumTest(shortName, [], cursor);
+		# getInfoForumTest(shortName, [], cursor);
 
 		cursor.execute(query)
 		rowsUser = cursor.fetchall()
@@ -169,7 +169,7 @@ def listPostsForum(request):
 		
 	try:
 		#выдаст исключение, если такого  нет
-		getInfoForumTest(shortName, [], cursor);
+		# getInfoForumTest(shortName, [], cursor);
 
 		cursor.execute(query)
 		rowsPost = cursor.fetchall()
@@ -216,7 +216,7 @@ def listThreadsForum(request):
 		
 	try:
 		#выдаст исключение, если такого  нет
-		getInfoForumTest(shortName, [], cursor);
+		# getInfoForumTest(shortName, [], cursor);
 
 		cursor.execute(query)
 		rowsThread = cursor.fetchall()

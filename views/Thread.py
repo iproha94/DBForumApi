@@ -159,16 +159,16 @@ def listThread(request):
 		query += " limit %s " % (limit)
 		
 	try:
-		if userEmail is not None:
-			from views.User import getInfoUserTest
-			getInfoUserTest(userEmail, [], cursor)
-			del getInfoUserTest
+		# if userEmail is not None:
+		# 	from views.User import getInfoUserTest
+		# 	getInfoUserTest(userEmail, [], cursor)
+		# 	del getInfoUserTest
 
 
-		if forumShortName is not None:
-			from views.Forum import getInfoForumTest
-			getInfoForumTest(forumShortName, [], cursor)
-			del getInfoForumTest
+		# if forumShortName is not None:
+		# 	from views.Forum import getInfoForumTest
+		# 	getInfoForumTest(forumShortName, [], cursor)
+		# 	del getInfoForumTest
 		
 		cursor.execute(query)
 		rowsThread = cursor.fetchall()
@@ -213,7 +213,7 @@ def listPostsThread(request):
 		query += " limit %s " % (limit)
 		
 	try:
-		getInfoThreadTest(threadId, [], cursor)
+		# getInfoThreadTest(threadId, [], cursor)
 
 		cursor.execute(query)
 		rowsPost = cursor.fetchall()
@@ -244,7 +244,7 @@ def openThread(request1):
 	query = "update Thread set isClosed = %s where threadId = %s limit 1 ;"	% (0, threadId)
 
 	try:
-		getInfoThreadTest(threadId, [], cursor)
+		# getInfoThreadTest(threadId, [], cursor)
 		cursor.execute(query)
 
 		responseMessage = { "thread": threadId }
@@ -267,7 +267,7 @@ def removeThread(request1):
 				update Post set isDeleted = %s where threadId = %s  ;'''  % (1, threadId, 1, threadId)	
 
 	try:
-		getInfoThreadTest(threadId, [], cursor)
+		# getInfoThreadTest(threadId, [], cursor)
 
 		cursor.execute(query)
 
@@ -293,7 +293,7 @@ def restoreThread(request1):
 					where threadId = %s ;	'''	 % (0, threadId, 0, threadId)
 
 	try:
-		getInfoThreadTest(threadId, [], cursor)
+		# getInfoThreadTest(threadId, [], cursor)
 
 		cursor.execute(query )
 
@@ -320,11 +320,11 @@ def subscribeThread(request1):
 				values (%s,%s); ''' 
 
 	try:
-		getInfoThreadTest(threadId, [], cursor)
+		# getInfoThreadTest(threadId, [], cursor)
 
-		from views.User import getInfoUserTest
-		getInfoUserTest(userEmail, [], cursor)
-		del getInfoUserTest
+		# from views.User import getInfoUserTest
+		# getInfoUserTest(userEmail, [], cursor)
+		# del getInfoUserTest
 
 		try:
 			cursor.execute(query, (userEmail, threadId))
@@ -353,11 +353,11 @@ def unsubscribeThread(request1):
 				where userEmail = %s and threadId = %s ''' 
 
 	try:
-		getInfoThreadTest(threadId, [], cursor)
+		# getInfoThreadTest(threadId, [], cursor)
 		
-		from views.User import getInfoUserTest
-		getInfoUserTest(userEmail, [], cursor)
-		del getInfoUserTest
+		# from views.User import getInfoUserTest
+		# getInfoUserTest(userEmail, [], cursor)
+		# del getInfoUserTest
 
 		try:
 			cursor.execute(query, (userEmail, threadId))
@@ -438,7 +438,7 @@ def closeThread(request1):
 	query = "update Thread set isClosed = %s where threadId = %s limit 1 ;"	
 
 	try:
-		getInfoThreadTest(threadId, [], cursor)
+		# getInfoThreadTest(threadId, [], cursor)
 		cursor.execute(query, (1, threadId))
 
 		responseMessage = { "thread": threadId }

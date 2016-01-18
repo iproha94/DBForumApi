@@ -200,7 +200,7 @@ def listFollowers(request):
 
 	try:
 		#выдаст исключение, если такого пользователя нет
-		getInfoUserTest(email, [], cursor);
+		# getInfoUserTest(email, [], cursor);
 
 		cursor.execute(query)
 		rowsFollower = cursor.fetchall()
@@ -245,7 +245,7 @@ def listFollowing(request):
 		
 	try:
 		#выдаст исключение, если такого пользователя нет
-		getInfoUserTest(email, [], cursor);
+		# getInfoUserTest(email, [], cursor);
 
 		cursor.execute(query)
 		rowsFollowee = cursor.fetchall()
@@ -337,7 +337,7 @@ def listPostsUser(request):
 		query += " limit %s " % (limit)
 		
 	try:
-		getInfoUserTest(userEmail, [], cursor)
+		# getInfoUserTest(userEmail, [], cursor)
 
 		cursor.execute(query)
 		rowsPost = cursor.fetchall()
