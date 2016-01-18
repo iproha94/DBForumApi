@@ -12,12 +12,12 @@ def getInfoForumTest(shortname, related, cursor):
 			''' % (shortname)
 	cursor.execute(query)
 
-	from views.User import getInfoUserTest
+	# from views.User import getInfoUserTest
 
-	if 'user' in related:
-		getInfoUserTest(userEmail, ['followers', 'following', 'subscriptions'], cursor)	
+	# if 'user' in related:
+	# 	getInfoUserTest(userEmail, ['followers', 'following', 'subscriptions'], cursor)	
 	
-	del getInfoUserTest
+	# del getInfoUserTest
 
 def getInfoForum(shortname, related, cursor):
 	query = '''select forumId, userEmail, shortName, name

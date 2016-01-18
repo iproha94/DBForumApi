@@ -13,15 +13,15 @@ def getInfoThreadTest(id, related, cursor):
 
 	cursor.execute(query)
 
-	from views.User import getInfoUserTest
-	if 'user' in related:
-		getInfoUserTest(userEmail, ['followers', 'following', 'subscriptions'], cursor)	
-	del getInfoUserTest
+	# from views.User import getInfoUserTest
+	# if 'user' in related:
+	# 	getInfoUserTest(userEmail, ['followers', 'following', 'subscriptions'], cursor)	
+	# del getInfoUserTest
 
-	from views.Forum import getInfoForumTest
-	if 'forum' in related:
-		getInfoForumTest(forumShortName, [], cursor)
-	del getInfoForumTest
+	# from views.Forum import getInfoForumTest
+	# if 'forum' in related:
+	# 	getInfoForumTest(forumShortName, [], cursor)
+	# del getInfoForumTest
 
 def getInfoThread(id, related, cursor):
 	id = int(id)
