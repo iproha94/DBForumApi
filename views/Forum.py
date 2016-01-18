@@ -39,12 +39,12 @@ def getInfoForum(shortname, related, cursor):
 	        "short_name": shortname
 		}
 
-	from views.User import getInfoUser
 
 	if 'user' in related:
+		from views.User import getInfoUser
 		d.update({'user': getInfoUser(userEmail, ['followers', 'following', 'subscriptions'], cursor)})	
+		del getInfoUser
 	
-	del getInfoUser
 	return d
 
 @csrf_exempt 
@@ -105,9 +105,10 @@ def listUsersForum(request):
 	since_id = request.GET.get('since_id', None)
 
 	query = '''select p.userEmail userEmail, u.name as uname, u.userId as userId
-				from Post p join User u on p.userEmail = u.email
+				from Post p join User u 
+					on p.userEmail = u.email
 				where p.forumShortName = '%s'
-				group by  uname, userId 
+				group by uname, userId 
 			''' % (shortName) 
 
 	if since_id is not None:
@@ -125,13 +126,13 @@ def listUsersForum(request):
 		cursor.execute(query)
 		rowsUser = cursor.fetchall()
 
-		from views.User import getInfoUser
-
 		d = [];
-		for row in rowsUser:
-			 d.append(getInfoUser(row[0], ['followers', 'following', 'subscriptions'], cursor))
 
-		del getInfoUser
+		for row in rowsUser:
+			from views.User import getInfoUser
+			d.append(getInfoUser(row[0], ['followers', 'following', 'subscriptions'], cursor))
+			del getInfoUser
+
 		code = 0
 		responseMessage = d
 	except:
@@ -167,18 +168,18 @@ def listPostsForum(request):
 		query += " limit %s " % (limit)
 		
 	try:
-	#выдаст исключение, если такого  нет
+		#выдаст исключение, если такого  нет
 		getInfoForumTest(shortName, [], cursor);
 
 		cursor.execute(query)
 		rowsPost = cursor.fetchall()
 
-		from views.Post import getInfoPost
-
 		d = [];
 		for row in rowsPost:
-			 d.append(getInfoPost(row[0], related, cursor))
-		del getInfoPost
+			from views.Post import getInfoPost
+			d.append(getInfoPost(row[0], related, cursor))
+			del getInfoPost
+
 		code = 0
 		responseMessage = d
 	except:
@@ -214,19 +215,19 @@ def listThreadsForum(request):
 		query += " limit %s " % (limit)
 		
 	try:
-	#выдаст исключение, если такого  нет
+		#выдаст исключение, если такого  нет
 		getInfoForumTest(shortName, [], cursor);
 
 		cursor.execute(query)
 		rowsThread = cursor.fetchall()
 
-		from views.Thread import getInfoThread
+		
 
 		d = [];
 		for row in rowsThread:
-			 d.append(getInfoThread(row[0], related, cursor))
-
-		del getInfoThread
+			from views.Thread import getInfoThread
+			d.append(getInfoThread(row[0], related, cursor))
+			del getInfoThread
 
 		code = 0
 		responseMessage = d

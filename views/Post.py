@@ -13,6 +13,21 @@ from datetime import datetime
 
 from django.views.decorators.csrf import csrf_exempt
 
+def getThreadByPost(id, related, cursor):
+	id = int(id)
+
+	query = '''select threadId
+				from Post
+				where postId = %s limit 1 ;
+			''' % (id) 
+
+	cursor.execute(query)
+	rowPost = cursor.fetchone()
+
+	threadId = rowPost[0]
+
+	return threadId
+
 def getInfoPostTest(id, related, cursor):
 	id = int(id)
 
@@ -76,12 +91,11 @@ def getInfoPost(id, related, cursor):
 	        "user": userEmail
 		}
 
-	from views.User import getInfoUser
 
 	if 'user' in related:
+		from views.User import getInfoUser
 		d.update({'user': getInfoUser(userEmail, ['followers', 'following', 'subscriptions'], cursor)})	
-
-	del getInfoUser
+		del getInfoUser
 	
 	if 'forum' in related:
 		d.update({'forum': getInfoForum(forumShortName, [], cursor)})
@@ -204,7 +218,6 @@ def listPost(request):
 	if limit is not None:
 		query += " limit %s " % (limit)
 		
-	d = [];
 	try:
 		if threadId is not None:
 			getInfoThreadTest(threadId, [], cursor)
@@ -215,6 +228,7 @@ def listPost(request):
 		cursor.execute(query)
 		rowsPost = cursor.fetchall()
 
+		d = [];
 		for row in rowsPost:
 			 d.append(getInfoPost(row[0], [], cursor))
 
@@ -235,14 +249,16 @@ def removePost(request1):
 	#Post
 	postId = request['post']	
 
-	query = "update Post set isDeleted = %s where postId = %s limit 1 ;"	
 
 	try:
-		temp = getInfoPost(postId, [], cursor)
-		cursor.execute(query, (1, postId))
+		temp = getThreadByPost(postId, [], cursor)
 
-		query = ''' update Thread set posts = posts - 1 where threadId = %s limit 1 '''
-		cursor.execute(query, (temp["thread"]))
+		query = ''' update Post set isDeleted = %s 
+						where postId = %s limit 1 ;	
+		 			update Thread set posts = posts - 1 
+		 				where threadId = %s limit 1 ''' % (1, postId, int(temp))
+
+		cursor.execute(query)
 
 		responseMessage = { "post": postId }
 		code = 0
@@ -261,14 +277,16 @@ def restorePost(request1):
 	#Post
 	postId = request['post']	
 
-	query = "update Post set isDeleted = %s where postId = %s limit 1 ;"	
 
 	try:
-		temp = getInfoPost(postId, [], cursor)
-		cursor.execute(query, (0, postId))
+		temp = getThreadByPost(postId, [], cursor)
 
-		query = ''' update Thread set posts = posts + 1 where threadId = %s limit 1 '''
-		cursor.execute(query, (temp["thread"]))
+		query = ''' update Post set isDeleted = %s 
+						where postId = %s limit 1 ;	
+		 			update Thread set posts = posts + 1 
+		 				where threadId = %s limit 1 ''' % (0, postId, int(temp))
+		cursor.execute(query)
+
 
 		responseMessage = { "post": postId }
 		code = 0
@@ -292,10 +310,10 @@ def updatePost(request1):
 
 	query = '''update Post 
 				set message = %s 
-				where postId = %s limit 1 ;	'''
+				where postId = %s limit 1 ;	''' % (message, postId)
 	
 	try:
-		cursor.execute(query, (message, postId))
+		cursor.execute(query)
 		code = 0
 		responseMessage = getInfoPost(postId, [], cursor)
 	except:
@@ -316,15 +334,13 @@ def votePost(request1):
 
 	vote = 'likes' if vote == 1 else 'dislikes'
 
-	query = '''update Post 
-				set %s = %s + 1 
-				where postId = %s limit 1 '''
+	query = ''' update Post 
+				set %s = %s + 1 , points = likes - dislikes
+					where postId = %s limit 1 ;
+				'''  % (vote, vote, postId)
 
 	try:
-		cursor.execute(query % (vote, vote, postId))
-
-		query = ''' update Post set points = likes - dislikes where postId = %s limit 1 '''	
-		cursor.execute(query % (postId))	
+		cursor.execute(query)
 
 		code = 0
 		responseMessage = getInfoPost(postId, [], cursor)

@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.db import connection
 
 from views.Post import getInfoPost
-from views.Post import getInfoPostTest
+
 
 import json
 from django.views.decorators.csrf import csrf_exempt
@@ -16,7 +16,6 @@ def getInfoUserTest(email, related, cursor):
 				where email = '%s' limit 1 ; ''' % (email) 
 
 	cursor.execute(query)
-
 	
 
 ##получить инфу о пользователе по емейлу

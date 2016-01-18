@@ -53,15 +53,15 @@ def getInfoThread(id, related, cursor):
 			"posts": rowThread[11]
 		}
 
-	from views.User import getInfoUser
 	if 'user' in related:
+		from views.User import getInfoUser
 		d.update({'user': getInfoUser(userEmail, ['followers', 'following', 'subscriptions'], cursor)})	
-	del getInfoUser
+		del getInfoUser
 
-	from views.Forum import getInfoForum
 	if 'forum' in related:
+		from views.Forum import getInfoForum
 		d.update({'forum': getInfoForum(forumShortName, [], cursor)})	
-	del getInfoForum
+		del getInfoForum
 
 	return d
 
@@ -114,7 +114,7 @@ def detailsThread(request):
 
 	related = request.GET.getlist('related', [])
 
-	if "thread" in 	related:
+	if "thread" in related:
 		code = 3
 	 	responseMessage = "Not valide request"
 	else:
@@ -161,16 +161,14 @@ def listThread(request):
 	try:
 		if userEmail is not None:
 			from views.User import getInfoUserTest
-
 			getInfoUserTest(userEmail, [], cursor)
 			del getInfoUserTest
 
-		from views.Forum import getInfoForumTest
 
 		if forumShortName is not None:
+			from views.Forum import getInfoForumTest
 			getInfoForumTest(forumShortName, [], cursor)
-		
-		del getInfoForumTest
+			del getInfoForumTest
 		
 		cursor.execute(query)
 		rowsThread = cursor.fetchall()
@@ -220,11 +218,11 @@ def listPostsThread(request):
 		cursor.execute(query)
 		rowsPost = cursor.fetchall()
 
-		from views.Post import getInfoPost
 		d = [];
 		for row in rowsPost:
-			 d.append(getInfoPost(row[0], [], cursor))
-		del getInfoPost
+			from views.Post import getInfoPost
+			d.append(getInfoPost(row[0], [], cursor))
+			del getInfoPost
 
 		code = 0
 		responseMessage = d
@@ -243,11 +241,11 @@ def openThread(request1):
 	#Post
 	threadId = request['thread']	
 
-	query = "update Thread set isClosed = %s where threadId = %s limit 1 ;"	
+	query = "update Thread set isClosed = %s where threadId = %s limit 1 ;"	% (0, threadId)
 
 	try:
 		getInfoThreadTest(threadId, [], cursor)
-		cursor.execute(query, (0, threadId))
+		cursor.execute(query)
 
 		responseMessage = { "thread": threadId }
 		code = 0
@@ -266,12 +264,12 @@ def removeThread(request1):
 	threadId = request['thread']	
 
 	query = '''update Thread set isDeleted = %s, posts = 0 where threadId = %s limit 1;
-				update Post set isDeleted = %s where threadId = %s  ;'''	
+				update Post set isDeleted = %s where threadId = %s  ;'''  % (1, threadId, 1, threadId)	
 
 	try:
 		getInfoThreadTest(threadId, [], cursor)
 
-		cursor.execute(query % (1, threadId, 1, threadId))
+		cursor.execute(query)
 
 		responseMessage = { "thread": threadId }
 		code = 0
@@ -289,13 +287,15 @@ def restoreThread(request1):
 
 	threadId = request['thread']
 
-	query = '''update Thread set isDeleted = %s, posts = allposts where threadId = %s limit 1 ;
-				update Post set isDeleted = %s where threadId = %s ;	'''	
+	query = '''update Thread set isDeleted = %s, posts = allposts 
+					where threadId = %s limit 1 ;
+				update Post set isDeleted = %s
+					where threadId = %s ;	'''	 % (0, threadId, 0, threadId)
 
 	try:
 		getInfoThreadTest(threadId, [], cursor)
 
-		cursor.execute(query % (0, threadId, 0, threadId))
+		cursor.execute(query )
 
 		responseMessage = { "thread": threadId }
 		code = 0
@@ -321,6 +321,7 @@ def subscribeThread(request1):
 
 	try:
 		getInfoThreadTest(threadId, [], cursor)
+
 		from views.User import getInfoUserTest
 		getInfoUserTest(userEmail, [], cursor)
 		del getInfoUserTest
@@ -353,10 +354,11 @@ def unsubscribeThread(request1):
 
 	try:
 		getInfoThreadTest(threadId, [], cursor)
+		
 		from views.User import getInfoUserTest
-
 		getInfoUserTest(userEmail, [], cursor)
 		del getInfoUserTest
+
 		try:
 			cursor.execute(query, (userEmail, threadId))
 		except:
@@ -408,14 +410,11 @@ def voteThread(request1):
 	vote = 'likes' if vote == 1 else 'dislikes'
 
 	query = '''update Thread 
-				set %s = %s + 1 
+				set %s = %s + 1 , points = (likes - dislikes)
 				where threadId = %s limit 1 '''
 
 	try:
 		cursor.execute(query % (vote, vote, threadId))
-
-		query = ''' update Thread set points = (likes - dislikes) where threadId = %s limit 1 '''	
-		cursor.execute(query % (threadId))
 
 		code = 0
 		responseMessage = getInfoThread(threadId, [], cursor)
