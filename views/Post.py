@@ -56,7 +56,7 @@ def getInfoPost(id, related, cursor):
 
 	query = '''select threadId, userEmail, parent, datePost, message, 
 					isEdited, isDeleted, isSpam, isHighlighted, isApproved,
-					forumShortName, likes, dislikes, points
+					forumShortName, likes, dislikes, likes - dislikes
 				from Post
 				where postId = %s limit 1 ;
 			''' % (id) 
@@ -219,11 +219,11 @@ def listPost(request):
 		query += " limit %s " % (limit)
 		
 	try:
-		if threadId is not None:
-			getInfoThreadTest(threadId, [], cursor)
+		# if threadId is not None:
+		# 	getInfoThreadTest(threadId, [], cursor)
 
-		if forumShortName is not None:
-			getInfoForumTest(forumShortName, [], cursor)
+		# if forumShortName is not None:
+		# 	getInfoForumTest(forumShortName, [], cursor)
 
 		cursor.execute(query)
 		rowsPost = cursor.fetchall()
@@ -335,7 +335,7 @@ def votePost(request1):
 	vote = 'likes' if vote == 1 else 'dislikes'
 
 	query = ''' update Post 
-				set %s = %s + 1 , points = likes - dislikes
+				set %s = %s + 1
 					where postId = %s limit 1 ;
 				'''  % (vote, vote, postId)
 

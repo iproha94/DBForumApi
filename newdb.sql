@@ -26,7 +26,9 @@ CREATE TABLE IF NOT EXISTS `myForumApi`.`User` (
   `isAnonymous` TINYINT(1) NULL DEFAULT '0',
   PRIMARY KEY (`userId`, `email`),
   UNIQUE INDEX `user_id_UNIQUE` (`userId` ASC),
-  UNIQUE INDEX `email_UNIQUE` (`email` ASC))
+  UNIQUE INDEX `email_UNIQUE` (`email` ASC),
+  INDEX `email_name_userId` (`email` ASC, `name` ASC, `userId` ASC),
+  INDEX `name_userId` (`name` ASC, `userId` ASC))
 ENGINE = InnoDB
 AUTO_INCREMENT = 102352
 DEFAULT CHARACTER SET = utf8;
@@ -39,7 +41,6 @@ CREATE TABLE IF NOT EXISTS `myForumApi`.`Follower` (
   `followerEmail` VARCHAR(45) NOT NULL,
   `followeeEmail` VARCHAR(45) NOT NULL,
   PRIMARY KEY (`followerEmail`, `followeeEmail`),
-  INDEX `fk_FollowerFolloweeEmail` (`followeeEmail` ASC),
   INDEX `user_getInfoUser` (`followeeEmail` ASC, `followerEmail` ASC),
   CONSTRAINT `fk_FollowerFolloweeEmail`
     FOREIGN KEY (`followeeEmail`)
@@ -68,7 +69,7 @@ CREATE TABLE IF NOT EXISTS `myForumApi`.`Forum` (
   UNIQUE INDEX `Forumcol_UNIQUE` (`shortName` ASC),
   UNIQUE INDEX `name_UNIQUE` (`name` ASC),
   INDEX `fk_ForumUserEmail_idx` (`userEmail` ASC),
-  INDEX `forum_getInfoForum` (`shortName` ASC, `name` ASC, `userEmail` ASC, `forumId` ASC),
+  INDEX `shortName_name_userEmail_forumId` (`shortName` ASC, `name` ASC, `userEmail` ASC, `forumId` ASC),
   CONSTRAINT `fk_ForumUserEmail`
     FOREIGN KEY (`userEmail`)
     REFERENCES `myForumApi`.`User` (`email`))
@@ -99,7 +100,8 @@ CREATE TABLE IF NOT EXISTS `myForumApi`.`Thread` (
   UNIQUE INDEX `threadId_UNIQUE` (`threadId` ASC),
   INDEX `fk_userId_idx` (`userEmail` ASC),
   INDEX `fk_forumId_idx` (`forumShortName` ASC),
-  INDEX `forum_listThreadsForum` (`forumShortName` ASC, `date` ASC),
+  INDEX `userEmail_date_threadId` (`userEmail` ASC, `date` ASC, `threadId` ASC),
+  INDEX `forumShortName_date_threadId` (`forumShortName` ASC, `date` ASC, `threadId` ASC),
   CONSTRAINT `fk_ThreadForumShortName`
     FOREIGN KEY (`forumShortName`)
     REFERENCES `myForumApi`.`Forum` (`shortName`),
@@ -127,7 +129,6 @@ CREATE TABLE IF NOT EXISTS `myForumApi`.`Post` (
   `isHighlighted` TINYINT(1) NULL DEFAULT '0',
   `isApproved` TINYINT(1) NULL DEFAULT '0',
   `forumShortName` VARCHAR(45) NULL DEFAULT NULL,
-  `points` INT(11) NULL DEFAULT '0',
   `likes` INT(11) NULL DEFAULT '0',
   `dislikes` INT(11) NULL DEFAULT '0',
   PRIMARY KEY (`postId`),
@@ -136,9 +137,11 @@ CREATE TABLE IF NOT EXISTS `myForumApi`.`Post` (
   INDEX `fk_parent_idx` (`parent` ASC),
   INDEX `fk_PostUserEmail_idx` (`userEmail` ASC),
   INDEX `fk_ForumShortName_idx` (`forumShortName` ASC),
-  INDEX `forum_listPostsForum` (`forumShortName` ASC, `datePost` ASC, `postId` ASC),
-  INDEX `thread_listPostsThread` (`threadId` ASC, `datePost` ASC, `postId` ASC),
-  INDEX `user_listPostsUser` (`userEmail` ASC, `datePost` ASC, `postId` ASC),
+  INDEX `forumShortName_datePost_postId` (`forumShortName` ASC, `datePost` ASC, `postId` ASC),
+  INDEX `threadId_datePost_postId` (`threadId` ASC, `datePost` ASC, `postId` ASC),
+  INDEX `userEmail_datePost_postId` (`userEmail` ASC, `datePost` ASC, `postId` ASC),
+  INDEX `forumShortName_userEmail` (`forumShortName` ASC, `userEmail` ASC),
+  INDEX `postId_threadId` (`postId` ASC, `threadId` ASC),
   CONSTRAINT `fk_ForumShortName`
     FOREIGN KEY (`forumShortName`)
     REFERENCES `myForumApi`.`Forum` (`shortName`)
@@ -171,8 +174,7 @@ CREATE TABLE IF NOT EXISTS `myForumApi`.`Subscriber` (
   `userEmail` VARCHAR(45) NOT NULL,
   `threadId` INT(11) NOT NULL,
   PRIMARY KEY (`userEmail`, `threadId`),
-  INDEX `fk_threadId_idx` (`threadId` ASC),
-  INDEX `user_getInfoUser` (`userEmail` ASC, `threadId` ASC),
+  INDEX `user_getInfoUser` (`threadId` ASC, `userEmail` ASC),
   CONSTRAINT `fk_SubscriberThreadId`
     FOREIGN KEY (`threadId`)
     REFERENCES `myForumApi`.`Thread` (`threadId`)
