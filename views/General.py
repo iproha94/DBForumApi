@@ -33,7 +33,7 @@ def status(request):
 	cursor.execute(query)
 	sizeUser = cursor.fetchone()[0]
 
-	query = '''select count(*) from Thread where isDeleted = 0;'''
+	query = '''select count(*) from Thread;'''
 	cursor.execute(query)
 	sizeThread = cursor.fetchone()[0]
 
@@ -41,7 +41,7 @@ def status(request):
 	cursor.execute(query)
 	sizeForum = cursor.fetchone()[0]
 
-	query = '''select count(*) from Post where isDeleted = 0;'''
+	query = '''select count(*) from Post;'''
 	cursor.execute(query)
 	sizePost = cursor.fetchone()[0]
 
