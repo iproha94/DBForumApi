@@ -1,6 +1,10 @@
-# DBForumApi
-Технопарк 2015 осень<br />
-Базы данных. Api форума.<br />
-Python, django, gunicorn.<br />
-Документация:<br />
-https://github.com/s-stupnikov/technopark-db-api
+# Технопарк (Mail.ru Group): Базы данных
+Реализация Api форума  
+
+**Язык:** Python  
+
+**Используемые технологии:**  
+1. django  
+2. gunicorn    
+
+[Документация](https://github.com/s-stupnikov/technopark-db-api)
